@@ -1,0 +1,31 @@
+[package]
+name = "validation_semantic"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# Untuk Node.js/WebAssembly
+wasm-bindgen = { version = "0.2", optional = true }
+pyo3 = { version = "0.20", features = ["extension-module"], optional = true }
+
+# Untuk Kotlin/Android (JNI)
+# jni = "0.21"
+
+# Untuk PHP (ext-php-rs)
+# ext-php-rs = "0.10"
+
+# Untuk Dart (FFI)
+# cbindgen = "0.26"
+
+
+[profile.release]
+# Untuk ukuran binary lebih kecil
+lto = true
+opt-level = "z"
+
+[features]
+wasm = ["dep:wasm-bindgen"]
+python = ["dep:pyo3"]
