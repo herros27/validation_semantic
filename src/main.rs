@@ -8,19 +8,21 @@ fn main() {
     println!("=== Memulai Pengujian FFI dari main.rs dengan Pilihan Model (Enum) ===");
 
     let test_inputs = [
-        "Kemas Khairunsyah.",
-        "Jl. Kapas No.9, Semaki, Kec. Umbulharjo, Kota Yogyakarta, Daerah Istimewa Yogyakarta 55166",
-        "Universitas Ahmad Dahlan",
-        "Irun2701",
-        "Ini input dengan \"tanda kutip\" di dalamnya.",
-        "",
+        // ("Kemas Khairunsyah.", "Nama Lengkap"),
+        // ("Jl. Kapas No.9, Semaki, Kec. Umbulharjo, Kota Yogyakarta, DIY 55166", "Alamat Pengiriman"),
+        // ("Universitas Ahmad Dahlan", "Nama Institusi"),
+        // ("Irun2701", "Nama Pengguna"),
+        ("08128788", "nomor telepon indonesia"),
+        // ("2200018155@webmail.uad.ac.id", "Nama"),
+        // ("Ini input dengan \"tanda kutip\" di dalamnya.", "Teks Umum"),
+        // ("", "Input Kosong"), // Jenis input bisa "Input K
     ];
 
     let models_to_test = [
-        // SupportedModel::Gemini2Flash,
-        SupportedModel::Gemini2FlashLite,
+        SupportedModel::Gemini2Flash,
+        // SupportedModel::Gemini2FlashLite,
         // SupportedModel::Gemini15Flash,
-        // SupportedModel::Gemini15Pro,
+        // SupportedModel::Gemini15Pro, //LIMITTTT
         // Kita tidak bisa langsung menambahkan integer '99' di sini karena array ini bertipe SupportedModel.
         // Pengujian untuk integer tidak valid ditangani oleh lib.rs jika dipanggil dari C.
     ];
@@ -31,7 +33,7 @@ fn main() {
         println!("\n\n=== Menguji dengan Model: {} ===", model_desc);
 
         // Iterasi untuk setiap kasus uji input (LOOP DALAM)
-        for (i, test_input_str) in test_inputs.iter().enumerate() {
+        for (i, (test_input_str, input_type_str)) in test_inputs.iter().enumerate() {
             println!("\n--- Kasus Uji Input {} (Model: {}): ---", i + 1, model_desc);
             println!("Input Teks: \"{}\"", test_input_str);
 
@@ -43,8 +45,16 @@ fn main() {
                 }
             };
 
+            let c_input_type = match CString::new(*input_type_str) {
+                Ok(cs) => cs,
+                Err(e) => {
+                    eprintln!("Error membuat CString untuk jenis input: '{}': {}", input_type_str, e);
+                    continue;
+                }
+            };
+
             // Panggil fungsi FFI dengan varian enum SupportedModel secara langsung
-            let result_ptr: *mut c_char = validate_text_ffi(c_input_text.as_ptr(), model_variant);
+            let result_ptr: *mut c_char = validate_text_ffi(c_input_text.as_ptr(), model_variant,c_input_type.as_ptr());
 
             if result_ptr.is_null() {
                 eprintln!("validate_text_ffi mengembalikan pointer null!");
@@ -74,17 +84,20 @@ fn main() {
             free_rust_string(result_ptr);
             println!("Memori untuk hasil kasus uji input {} telah dibebaskan.", i + 1);
         }
-        print!("===================================================");
+        print!("===================================================\n\n");
     }
 
     // --- Pengujian Kasus Batas dengan Pointer NULL ---
     println!("\n\n=== Menguji Kasus Batas dengan Pointer NULL ===");
     let null_text_ptr: *const c_char = std::ptr::null();
     let valid_model_for_null_test = SupportedModel::Gemini15Flash; // Gunakan varian enum yang valid
+    let example_input_type_str = "Contoh Jenis Input";
+    let c_example_input_type = CString::new(example_input_type_str).unwrap();
 
+    
     // 1. Teks NULL, Model VALID
     println!("\n--- Kasus: Teks Pointer NULL, Model VALID ({:?}) ---", valid_model_for_null_test);
-    let result_ptr_null_text: *mut c_char = validate_text_ffi(null_text_ptr, valid_model_for_null_test);
+    let result_ptr_null_text: *mut c_char = validate_text_ffi(null_text_ptr, valid_model_for_null_test, c_example_input_type.as_ptr());
     if !result_ptr_null_text.is_null() {
         let result_str = unsafe { CStr::from_ptr(result_ptr_null_text).to_str().unwrap_or_default() };
         println!("Hasil FFI (Teks NULL): {}", result_str);

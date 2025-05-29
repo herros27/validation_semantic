@@ -92,6 +92,7 @@ pub static APP_CONTEXT: Lazy<Result<AppContext, String>> = Lazy::new(|| {
 pub fn validate_input_with_llm_sync(
     user_input: &str,
     model_name: &str,
+    input_type_str: &str,
     context: &AppContext,
 ) -> Result<ValidationResponse, Box<dyn std::error::Error>> {
     let endpoint = format!(
@@ -100,13 +101,53 @@ pub fn validate_input_with_llm_sync(
         context.api_key
     );
 
-    let prompt = format!(
-        "Validasi input berikut dari user: \"{}\".\n\n\
-         Berikan penilaian apakah input valid atau tidak. Jika tidak valid, berikan alasan dan saran perbaikan. \
-         Jawab dalam format JSON yang ketat seperti ini (tanpa markdown atau teks tambahan di luar JSON): \
-         {{ \"valid\": true|false, \"message\": \"penjelasan\" }}",
-        user_input.replace("\"", "\\\"")
-    );
+    let prompt: String;
+
+    match input_type_str.to_lowercase().as_str() {
+        "alamat email" | "email" => {
+            prompt = format!(
+                "Validasi alamat email berikut: \"{}\". \
+                 Pastikan formatnya benar, domainnya terlihat valid dan bukan domain contoh (seperti example.com). \
+                 Alamat email juga tidak boleh lebih dari 254 karakter. \
+                 Jawab dalam format JSON: {{ \"valid\": true|false, \"message\": \"penjelasan\" }}",
+                user_input.replace("\"", "\\\"")
+            );
+            // Anda bahkan bisa menambahkan validasi regex sederhana di sini sebelum ke LLM
+        }
+        "nama lengkap" | "nama" => {
+            prompt = format!(
+                "Validasi nama lengkap berikut: \"{}\". \
+                 Nama lengkap seharusnya hanya mengandung huruf, spasi, dan mungkin tanda hubung atau apostrof tunggal. \
+                 Tidak boleh mengandung angka atau simbol aneh. Panjangnya wajar. \
+                 Jawab dalam format JSON: {{ \"valid\": true|false, \"message\": \"penjelasan\" }}",
+                user_input.replace("\"", "\\\"")
+            );
+        }
+        "nomor telepon indonesia" => {
+            prompt = format!(
+                // ... prompt yang sangat spesifik untuk nomor telepon Indonesia ...
+                "Validasi nomor telepon berikut: \"{}\". \
+                nomor telepon indonesia seharusnya hanya mengandung angka, dan di awali dengan +62 atau 08.\
+                Tidak boleh mengandung simbol aneh atau huruf/ Panjangnya wajar.\
+                Jawab dalam format JSON: {{ \"valid\": true|false, \"message\": \"penjelasan\" }}",
+                user_input.replace("\"", "\\\"")
+            );
+        }
+        // Default case akan menggunakan prompt generik Anda saat ini
+        _ => { // Jenis input lain atau generik
+            prompt = format!(
+                "Validasi input berikut dari user, yang merupakan sebuah **{}**: \"{}\".\n\n\
+                 Berikan penilaian apakah input tersebut valid atau tidak sebagai **{}** untuk penggunaan praktis. \
+                 Jika ini adalah alamat email, TIDAK BOLEH menggunakan domain yang dicadangkan untuk contoh atau dokumentasi (seperti example.com, example.net, example.org, example.edu, atau domain .test, .localhost, .invalid). \
+                 Jika tidak valid karena alasan ini atau alasan lain, berikan alasan dan saran perbaikan. \
+                 Jawab dalam format JSON yang ketat seperti ini (tanpa markdown atau teks tambahan di luar JSON): \
+                 {{ \"valid\": true|false, \"message\": \"penjelasan\" }}",
+                input_type_str,
+                user_input.replace("\"", "\\\""),
+                input_type_str
+            );
+        }
+    }
 
     let body = serde_json::json!({
         "contents": [ { "parts": [ { "text": prompt } ] } ],

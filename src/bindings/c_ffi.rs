@@ -1,4 +1,4 @@
-// src/c_ffi.rs
+// src/bindings/c_ffi.rs
 
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
@@ -24,6 +24,7 @@ fn handle_c_ffi_error(message: String) -> *mut c_char {
 pub extern "C" fn validate_text_ffi(
     text_ptr: *const c_char,
     model_selector: SupportedModel,
+    input_type_ptr: *const c_char,
 ) -> *mut c_char {
     if text_ptr.is_null() {
         return handle_c_ffi_error("Input text pointer is null.".to_string());
@@ -49,9 +50,19 @@ pub extern "C" fn validate_text_ffi(
         }
     }
 
+      // Validasi dan konversi input_type_ptr
+    if input_type_ptr.is_null() {
+        return handle_c_ffi_error("Input type pointer is null.".to_string());
+    }
+    let c_str_input_type = unsafe { CStr::from_ptr(input_type_ptr) };
+    let input_type_str = match c_str_input_type.to_str() {
+        Ok(s) => s,
+        Err(_) => return handle_c_ffi_error("Invalid UTF-8 input string for input type.".to_string()),
+    };
+
     match &*APP_CONTEXT {
         Ok(context_ref) => {
-            match validate_input_with_llm_sync(text_input, model_name_to_use, context_ref) {
+            match validate_input_with_llm_sync(text_input, model_name_to_use, input_type_str,context_ref) {
                 Ok(res) => {
                     let json_res = serde_json::to_string(&res).unwrap_or_else(|_| "{\"valid\":false,\"message\":\"Failed to serialize successful validation response\"}".to_string());
                     CString::new(json_res).map_or_else(
