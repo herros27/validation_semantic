@@ -2,7 +2,8 @@
 
 // Deklarasikan modul-modul top-level
 pub mod core_logic;
-// pub mod c_ffi;
+
+
 pub mod bindings; // Ini akan memuat src/bindings/mod.rs
 
 // Hanya sertakan dan proses binding Python jika fitur diaktifkan
@@ -21,6 +22,8 @@ fn validation_semantic(_py: Python, m: &Bound<PyModule>) -> PyResult<()> { // <<
 // Jadi, re-export eksplisit mungkin tidak selalu diperlukan untuk main.rs jika ia menggunakan
 // `use validation_semantic_lib::c_ffi::{validate_text_ffi, free_rust_string};`
 // Tapi agar lebih mudah bagi main.rs jika tidak mau `use` path panjang:
+#[cfg(feature = "native_ffi_setup")]
 pub use crate::bindings::c_ffi::{validate_text_ffi, free_rust_string};
 // Dan juga re-export tipe yang mungkin dibutuhkan oleh main.rs untuk pengujian
+#[cfg(feature = "native_ffi_setup")]
 pub use crate::core_logic::{ValidationResponse, SupportedModel};

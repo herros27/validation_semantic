@@ -20,7 +20,7 @@ fn main() {
 
     let models_to_test = [
         SupportedModel::Gemini2Flash,
-        // SupportedModel::Gemini2FlashLite,
+        SupportedModel::Gemini2FlashLite,
         // SupportedModel::Gemini15Flash,
         // SupportedModel::Gemini15Pro, //LIMITTTT
         // Kita tidak bisa langsung menambahkan integer '99' di sini karena array ini bertipe SupportedModel.

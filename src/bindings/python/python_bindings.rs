@@ -4,8 +4,8 @@
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use crate::core_logic::{
- SupportedModel as RustSupportedModel, // Ganti nama impor agar tidak bentrok
-    APP_CONTEXT, validate_input_with_llm_sync
+ SupportedModel as RustSupportedModel // Ganti nama impor agar tidak bentrok
+    , API_CONFIG, validate_input_with_llm_sync
 };
 
 // Buat wrapper class Python untuk enum Rust
@@ -52,9 +52,9 @@ impl PySupportedModel {
 
 #[pyfunction]
 fn validate_text_py(py: Python, text: String, model_selector: &PySupportedModel, input_type: String) -> PyResult<PyObject> { // Terima &PySupportedModel
-    let context = match &*APP_CONTEXT {
-        Ok(ctx) => ctx,
-        Err(e) => return Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("AppContext init error: {}", e))),
+    let config = match &*API_CONFIG {
+        Ok(cfg) => cfg,
+        Err(e) => return Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("ApiConfig init error: {}", e))),
     };
 
     // Tidak perlu lagi from_int jika kita percaya tipenya sudah benar dari Python
@@ -63,7 +63,7 @@ fn validate_text_py(py: Python, text: String, model_selector: &PySupportedModel,
     let model_name = model_selector.variant.as_str();
     let model_selector_int = model_selector.variant as i32; // Jika masih perlu integer untuk logging atau error
 
-    match validate_input_with_llm_sync(&text, model_name, &input_type, context) {
+    match validate_input_with_llm_sync(&text, model_name, &input_type, config) {
         Ok(validation_response) => {
             let dict = PyDict::new(py);
             dict.set_item("valid", validation_response.valid)?;
@@ -79,5 +79,11 @@ fn validate_text_py(py: Python, text: String, model_selector: &PySupportedModel,
 pub fn register_items_for_python_module(_py: Python, parent_module: &Bound<PyModule>) -> PyResult<()> {
     parent_module.add_wrapped(wrap_pyfunction!(validate_text_py))?;
     parent_module.add_class::<PySupportedModel>()?; // Daftarkan kelas PySupportedModel
+
+      // Menggunakan RustSupportedModel untuk mendapatkan nilai integer konstanta
+    parent_module.add("MODEL_GEMINI_2_FLASH", RustSupportedModel::Gemini2Flash as i32)?;
+    parent_module.add("MODEL_GEMINI_2_FLASH_LITE", RustSupportedModel::Gemini2FlashLite as i32)?;
+    parent_module.add("MODEL_GEMINI_1_5_FLASH", RustSupportedModel::Gemini15Flash as i32)?;
+    parent_module.add("MODEL_GEMINI_1_5_PRO", RustSupportedModel::Gemini15Pro as i32)?;
     Ok(())
 }

@@ -1,9 +1,9 @@
 // src/bindings/c_ffi.rs
-
+#![cfg(feature = "native_ffi_setup")] // Atau fitur yang lebih spesifik jika perlu
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use crate::core_logic::{
-    ValidationResponse, SupportedModel, APP_CONTEXT, validate_input_with_llm_sync
+    ValidationResponse, SupportedModel, API_CONFIG, validate_input_with_llm_sync
 };
 
 /// Fungsi error handler internal untuk FFI C
@@ -60,7 +60,7 @@ pub extern "C" fn validate_text_ffi(
         Err(_) => return handle_c_ffi_error("Invalid UTF-8 input string for input type.".to_string()),
     };
 
-    match &*APP_CONTEXT {
+    match &*API_CONFIG {
         Ok(context_ref) => {
             match validate_input_with_llm_sync(text_input, model_name_to_use, input_type_str,context_ref) {
                 Ok(res) => {
