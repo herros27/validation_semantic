@@ -1,72 +1,105 @@
 #![cfg(target_arch = "wasm32")]
 
 use wasm_bindgen::prelude::*;
-use wasm_bindgen_futures::JsFuture;
+use js_sys; // Pastikan js_sys diimpor
 
 // Impor tipe dan fungsi async dari core_logic
 use crate::core_logic::{
-    ValidationResponse,
+    // ValidationResponse, // Tidak digunakan secara langsung di snippet ini
     SupportedModel,
-    validate_input_with_llm_async, // Sudah tidak perlu ApiConfig
+    // validate_input_with_llm_async, // Tidak digunakan secara langsung di snippet ini
 };
 
 // Panic hook opsional
 #[wasm_bindgen]
 pub fn init_panic_hook() {
-    #[cfg(feature = "console_error_panic_hook_feature")] 
+    #[cfg(feature = "console_error_panic_hook_feature")]
     console_error_panic_hook::set_once();
 }
 
-// Fungsi utama untuk validasi teks, dipanggil dari JavaScript
 #[wasm_bindgen(js_name = validateTextJs)]
 pub async fn validate_text_js(
     text: String,
     model_selector_int: i32,
     input_type: String,
-) -> Result<JsValue, JsValue> {
+) -> Result<JsValue, JsValue> { // Mengembalikan Result<JsValue, JsValue> untuk error handling ke JS
 
-    // Mapping angka ke enum model
-    let model_variant = match SupportedModel::from_int(model_selector_int) {
+    // 1. Mapping angka ke enum model (seperti yang sudah Anda lakukan di React)
+    let model_variant = match crate::core_logic::SupportedModel::from_int(model_selector_int) {
         Some(m) => m,
-        None => return Err(JsValue::from_str(&format!(
-            "Invalid model selector: {}. Valid options: [{}]",
-            model_selector_int,
-            SupportedModel::valid_options_desc()
-        ))),
+        None => {
+            let error_message = format!(
+                "Invalid model selector: {}. Valid options: [{}]",
+                model_selector_int,
+                crate::core_logic::SupportedModel::valid_options_desc()
+            );
+            return Err(JsValue::from_str(&error_message));
+        }
     };
     let model_name = model_variant.as_str();
 
-    // Panggil langsung fungsi core async tanpa config
-    match validate_input_with_llm_async(&text, model_name, &input_type).await {
+    // 2. Panggil fungsi inti dari core_logic
+    // Perhatikan path ke validate_input_with_llm_async mungkin perlu disesuaikan
+    // tergantung struktur modul Anda (misalnya, crate::core_logic::...)
+    match crate::core_logic::validate_input_with_llm_async(&text, model_name, &input_type).await {
         Ok(validation_response_rust) => {
+            // 3. Serialisasi hasil Rust (ValidationResponse) ke JsValue
             match serde_wasm_bindgen::to_value(&validation_response_rust) {
                 Ok(js_val) => Ok(js_val),
-                Err(e) => Err(JsValue::from_str(&format!(
-                    "Failed to serialize response to JsValue: {}", e
-                ))),
+                Err(e) => {
+                    let error_message = format!("Failed to serialize response to JsValue: {}", e);
+                    Err(JsValue::from_str(&error_message))
+                }
             }
         }
-        Err(err) => Err(JsValue::from_str(&err.to_string())),
+        Err(err) => {
+            // 4. Konversi error dari Rust ke JsValue
+            Err(JsValue::from_str(&err.to_string()))
+        }
     }
 }
+// ---- BARU: Fungsi untuk mendapatkan objek model selectors ----
+#[wasm_bindgen(js_name = getSupportedModelSelectors)]
+pub fn get_supported_model_selectors() -> JsValue {
+    let models = js_sys::Object::new();
 
-// Getter konstanta model
-#[wasm_bindgen]
-pub fn get_model_gemini_2_flash_lite_selector() -> i32 {
-    SupportedModel::Gemini2FlashLite as i32
-}
+    // Helper closure untuk menangani error set (opsional)
+    let handle_set_error = |err: JsValue| {
+        web_sys::console::error_2(&JsValue::from_str("Failed to set property on JS object:"), &err);
+        // Anda bisa memilih untuk panic atau tindakan lain di sini jika error ini kritikal
+    };
 
-#[wasm_bindgen]
-pub fn get_model_gemini_2_flash_selector() -> i32 {
-    SupportedModel::Gemini2Flash as i32
-}
+    if let Err(e) = js_sys::Reflect::set(
+        &models,
+        &JsValue::from_str("GEMINI_2_FLASH"),
+        &JsValue::from_f64(SupportedModel::Gemini2Flash as i32 as f64)
+    ) {
+        handle_set_error(e);
+    }
 
-#[wasm_bindgen]
-pub fn get_model_gemini_1_5_flash_selector() -> i32 {
-    SupportedModel::Gemini15Flash as i32
-}
+    if let Err(e) = js_sys::Reflect::set(
+        &models,
+        &JsValue::from_str("GEMINI_2_FLASH_LITE"),
+        &JsValue::from_f64(SupportedModel::Gemini2FlashLite as i32 as f64)
+    ) {
+        handle_set_error(e);
+    }
 
-#[wasm_bindgen]
-pub fn get_model_gemini_1_5_pro_selector() -> i32 {
-    SupportedModel::Gemini15Pro as i32
+    if let Err(e) = js_sys::Reflect::set(
+        &models,
+        &JsValue::from_str("GEMINI_1_5_FLASH"),
+        &JsValue::from_f64(SupportedModel::Gemini15Flash as i32 as f64)
+    ) {
+        handle_set_error(e);
+    }
+
+    if let Err(e) = js_sys::Reflect::set(
+        &models,
+        &JsValue::from_str("GEMINI_1_5_PRO"),
+        &JsValue::from_f64(SupportedModel::Gemini15Pro as i32 as f64)
+    ) {
+        handle_set_error(e);
+    }
+
+    models.into()
 }

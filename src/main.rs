@@ -12,7 +12,7 @@ fn main() {
         // ("Jl. Kapas No.9, Semaki, Kec. Umbulharjo, Kota Yogyakarta, DIY 55166", "Alamat Pengiriman"),
         // ("Universitas Ahmad Dahlan", "Nama Institusi"),
         // ("Irun2701", "Nama Pengguna"),
-        ("08128788", "nomor telepon indonesia"),
+        ("asdsasd sdsadsad", "Nama Lengkap"),
         // ("2200018155@webmail.uad.ac.id", "Nama"),
         // ("Ini input dengan \"tanda kutip\" di dalamnya.", "Teks Umum"),
         // ("", "Input Kosong"), // Jenis input bisa "Input K
@@ -20,7 +20,7 @@ fn main() {
 
     let models_to_test = [
         SupportedModel::Gemini2Flash,
-        SupportedModel::Gemini2FlashLite,
+        // SupportedModel::Gemini2FlashLite,
         // SupportedModel::Gemini15Flash,
         // SupportedModel::Gemini15Pro, //LIMITTTT
         // Kita tidak bisa langsung menambahkan integer '99' di sini karena array ini bertipe SupportedModel.
