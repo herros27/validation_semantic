@@ -5,14 +5,14 @@ use std::env;
 use dotenv::dotenv;
 use once_cell::sync::Lazy;
 use regex::Regex;
-// Impor kedua jenis klien reqwest
-#[cfg(feature = "native_ffi_setup")] // Atau fitur spesifik yang mengaktifkan 'reqwest/blocking'
+// Import reqwest clients untuk sinkron dan asinkron
+#[cfg(feature = "native_ffi_setup")]
 use reqwest::blocking::Client as BlockingClient;
 
 use reqwest::StatusCode;
 use reqwest::Client as AsyncClient;
 
-// Struct ValidationResponse dan Enum SupportedModel tetap sama
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ValidationResponse {
     pub valid: bool,
@@ -20,46 +20,45 @@ pub struct ValidationResponse {
 }
 
 #[repr(C)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SupportedModel {
-    Gemini2Flash = 0, Gemini2FlashLite = 1, Gemini15Flash = 2, Gemini15Pro = 3,
+    Gemini25Flash = 0, Gemini25FlashLite = 1, Gemini15Flash = 2, Gemini25Pro = 3,
 }
-impl SupportedModel { /* ... implementasi sama ... */
+impl SupportedModel {
     pub fn as_str(&self) -> &'static str {
         match self {
-            SupportedModel::Gemini2Flash => "gemini-2.0-flash",
-            SupportedModel::Gemini2FlashLite => "gemini-2.0-flash-lite",
+            SupportedModel::Gemini25Flash => "gemini-2.5-flash",
+            SupportedModel::Gemini25FlashLite => "gemini-2.5-flash-lite-preview-06-17",
             SupportedModel::Gemini15Flash => "gemini-1.5-flash-latest",
-            SupportedModel::Gemini15Pro => "gemini-1.5-pro-latest",
+            SupportedModel::Gemini25Pro => "gemini-2.5-pro",
         }
     }
     pub fn from_int(value: i32) -> Option<Self> {
         match value {
-            0 => Some(SupportedModel::Gemini2Flash),
-            1 => Some(SupportedModel::Gemini2FlashLite),
+            0 => Some(SupportedModel::Gemini25Flash),
+            1 => Some(SupportedModel::Gemini25FlashLite),
             2 => Some(SupportedModel::Gemini15Flash),
-            3 => Some(SupportedModel::Gemini15Pro),
+            3 => Some(SupportedModel::Gemini25Pro),
             _ => None,
         }
     }
     pub fn valid_options_desc() -> String {
-        format!("0 (Gemini2Flash), 1 (Gemini2FlashLite), 2 (Gemini15Flash), 3 (Gemini15Pro)")
+        format!("0 (Gemini25Flash), 1 (Gemini25FlashLite), 2 (Gemini15Flash), 3 (Gemini25Pro)")
     }
 }
 
 
-// Struct Gemini API tetap sama
+// Struct untuk parsing respons Gemini API
 #[derive(Debug, Deserialize)]
-struct GeminiApiPart { text: String }
+pub struct GeminiApiPart { pub text: String }
 #[derive(Debug, Deserialize)]
-struct GeminiApiContent { parts: Vec<GeminiApiPart> }
+pub struct GeminiApiContent { pub parts: Vec<GeminiApiPart> }
 #[derive(Debug, Deserialize)]
-struct GeminiApiResponseCandidate { content: GeminiApiContent }
+pub struct GeminiApiResponseCandidate { pub content: GeminiApiContent }
 #[derive(Debug, Deserialize)]
-struct GeminiApiResponse { candidates: Vec<GeminiApiResponseCandidate> }
+pub struct GeminiApiResponse { pub candidates: Vec<GeminiApiResponseCandidate> }
 
-// Konteks Aplikasi sekarang hanya menyimpan API Key
-// Klien HTTP akan dibuat di dalam fungsi yang membutuhkannya.
+// Konfigurasi API untuk menyimpan API key
 pub struct ApiConfig {
     pub api_key: String,
 }
@@ -73,60 +72,53 @@ pub static API_CONFIG: Lazy<Result<ApiConfig, String>> = Lazy::new(|| {
     Ok(ApiConfig { api_key })
 });
 
-// --- Versi Sinkron ---
-// Di dalam fungsi validate_input_with_llm_sync:
+// --- Fungsi Validasi dengan LLM (Sinkron) ---
 #[cfg(not(target_arch = "wasm32"))]
 #[cfg(feature = "native_ffi_setup")] 
 pub fn validate_input_with_llm_sync(
     user_input: &str,
     model_name: &str,
     input_type_str: &str,
-    config: &ApiConfig, // Menggunakan ApiConfig
-) -> Result<ValidationResponse, Box<dyn std::error::Error  + Send + Sync>> {
-      // Tahap 1: Validasi Sintaksis Lokal
-      if let Err(syntax_error_message) = pre_validate_syntactically(user_input, input_type_str) {
+    config: &ApiConfig,
+) -> Result<ValidationResponse, Box<dyn std::error::Error + Send + Sync>> {
+    // Tahap 1: Validasi Sintaksis Lokal
+    if let Err(syntax_error_message) = pre_validate_syntactically(user_input, input_type_str) {
         return Ok(ValidationResponse {
             valid: false,
             message: syntax_error_message,
         });
     }
 
-    // Tahap 2: Validasi Semantik dengan LLM (jika sintaksis OK)
+    // Tahap 2: Validasi Semantik dengan LLM
     println!("[DEBUG] Sintaksis OK untuk '{}' ({}), melanjutkan ke validasi LLM.", user_input, input_type_str);
-    let client = BlockingClient::builder() // Buat klien sinkron di sini
+    let client = BlockingClient::builder()
         .timeout(std::time::Duration::from_secs(60))
         .build()?;
 
-    let endpoint = format!( /* ... endpoint sama ... */
+    let endpoint = format!(
         "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}",
         model_name,
         config.api_key
     );
     let prompt = format_prompt(user_input, input_type_str);
-    let body = común_body_generation(&prompt);
+    let body = common_body_generation(&prompt);
 
     // Kirim permintaan dan dapatkan responsnya
     let response = client.post(&endpoint).json(&body).send()?;
     let status = response.status();
 
     if status.is_success() {
-        // Jika status sukses (2xx), proses seperti biasa
+        // Proses respons sukses
         let gemini_api_response: GeminiApiResponse = response.json()?;
         parse_gemini_response(gemini_api_response)
     } else {
-        // Jika status adalah error (4xx atau 5xx)
-        // Baca body error sebagai teks untuk informasi tambahan
-        // let error_body_text = response.text().unwrap_or_else(|e| {
-        //     format!("Tidak dapat membaca body respons error dari server (Status: {}). Error internal saat membaca body: {}", status, e)
-        // });
-
-        if status == StatusCode::TOO_MANY_REQUESTS { // Kode status 429
+        // Penanganan error HTTP
+        if status == StatusCode::TOO_MANY_REQUESTS {
             Err(format!(
                 "Model '{}' tidak dapat digunakan saat ini karena telah mencapai batas penggunaan (limit).",
                 model_name
-            ).into()) // .into() akan mengonversi String menjadi Box<dyn Error...>
+            ).into())
         } else {
-            // Untuk error HTTP lainnya (4xx selain 429, atau 5xx)
             Err(format!(
                 "Gagal menggunakan model '{}'. Server merespons dengan kode: {}.",
                 model_name, status
@@ -135,21 +127,22 @@ pub fn validate_input_with_llm_sync(
     }
 }
 
-// --- Versi Asinkron ---
+// --- Fungsi Validasi dengan LLM (Asinkron) ---
 pub async fn validate_input_with_llm_async(
     user_input: &str,
     model_name: &str,
     input_type_str: &str,
+    // config: &ApiConfig,
 ) -> Result<ValidationResponse, Box<dyn std::error::Error + Send + Sync>> {
-      // Tahap 1: Validasi Sintaksis Lokal
-      if let Err(syntax_error_message) = pre_validate_syntactically(user_input, input_type_str) {
+    // Tahap 1: Validasi Sintaksis Lokal
+    if let Err(syntax_error_message) = pre_validate_syntactically(user_input, input_type_str) {
         return Ok(ValidationResponse {
             valid: false,
             message: syntax_error_message,
         });
     }
 
-    // Tahap 2: Validasi Semantik dengan LLM (jika sintaksis OK)
+    // Tahap 2: Validasi Semantik dengan LLM
     println!("[DEBUG] Sintaksis OK untuk '{}' ({}), melanjutkan ke validasi LLM.", user_input, input_type_str);
     let client = {
         let builder = AsyncClient::builder();
@@ -162,37 +155,30 @@ pub async fn validate_input_with_llm_async(
             .map_err(|e| format!("Failed to build HTTP client: {}", e))?
     };
     const API_KEY: &str = "AIzaSyCWnm_TMUb9Zr3HVN_iQOss6zsMwxheoHw";
-
-    let endpoint = format!( /* ... endpoint sama ... */
+    let endpoint = format!(
         "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}",
         model_name,
         API_KEY
     );
     let prompt = format_prompt(user_input, input_type_str);
-    let body = común_body_generation(&prompt);
+    let body = common_body_generation(&prompt);
 
     // Kirim permintaan dan dapatkan responsnya
     let response = client.post(&endpoint).json(&body).send().await?;
     let status = response.status();
 
     if status.is_success() {
-        // Jika status sukses (2xx), proses seperti biasa
+        // Proses respons sukses
         let gemini_api_response: GeminiApiResponse = response.json().await?;
         parse_gemini_response(gemini_api_response)
     } else {
-        // Jika status adalah error (4xx atau 5xx)
-        // Baca body error sebagai teks untuk informasi tambahan
-        // let error_body_text = response.text().await.unwrap_or_else(|e| {
-        //     format!("Tidak dapat membaca body respons error dari server (Status: {}). Error internal saat membaca body: {}", status, e)
-        // });
-
-        if status == StatusCode::TOO_MANY_REQUESTS { // Kode status 429
+        // Penanganan error HTTP
+        if status == StatusCode::TOO_MANY_REQUESTS {
             Err(format!(
                 "Model '{}' tidak dapat digunakan saat ini karena telah mencapai batas penggunaan (limit).",
                 model_name
-            ).into()) // .into() akan mengonversi String menjadi Box<dyn Error...>
+            ).into())
         } else {
-            // Untuk error HTTP lainnya (4xx selain 429, atau 5xx)
             Err(format!(
                 "Gagal menggunakan model '{}'. Server merespons dengan kode: {}.",
                 model_name, status
@@ -203,44 +189,45 @@ pub async fn validate_input_with_llm_async(
 
 
 // --- Fungsi Validasi Sintaksis Lokal ---
-fn pre_validate_syntactically(user_input: &str, input_type_str: &str) -> Result<(), String> {
+pub fn pre_validate_syntactically(user_input: &str, input_type_str: &str) -> Result<(), String> {
+    // Validasi input dasar
+    if user_input.trim().is_empty() {
+        return Err("Input tidak boleh kosong.".to_string());
+    }
+
     // Batas panjang umum untuk mencegah input yang sangat besar
     let lower_input_type = input_type_str.to_lowercase();
     if lower_input_type != "deskripsi" && user_input.len() > 512 {
         return Err("Input terlalu panjang (melebihi 512 karakter).".to_string());
     }
-  
-    if user_input.trim().is_empty() {
-        return Err("Input tidak boleh kosong.".to_string());
-    }
 
+    // Validasi spesifik berdasarkan tipe input
     match input_type_str.to_lowercase().as_str() {
         "alamat email" | "email" => {
             if user_input.len() > 254 {
                 return Err("Error sintaks: Alamat email terlalu panjang (maks 254 karakter).".to_string());
             }
-            // Regex sederhana untuk format email.
+            // Validasi format email dengan regex
             static EMAIL_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[^\s@]+@[^\s@]+\.[^\s@]+$").unwrap());
             if !EMAIL_REGEX.is_match(user_input) {
                 return Err("Error sintaks: Format alamat email tidak valid.".to_string());
             }
         }
         "nama lengkap" | "nama" => {
-            // Regex untuk karakter yang diizinkan dan panjang total (2-100 karakter).
-            // Tidak lagi menggunakan lookahead.
+            // Validasi karakter dan panjang nama (3-80 karakter)
             static NAME_CHARS_LENGTH_REGEX: Lazy<Regex> = Lazy::new(|| {
-                Regex::new(r"^[a-zA-Z\s'-]{2,100}$").unwrap()
+                Regex::new(r"^[a-zA-Z\s'-]{3,80}$").unwrap()
             });
 
             if !NAME_CHARS_LENGTH_REGEX.is_match(user_input) {
                 return Err(
-                    "Error sintaks: Nama lengkap harus terdiri dari 2 hingga 100 karakter \
+                    "Error sintaks: Nama lengkap harus terdiri dari 3 hingga 80 karakter \
                     dan hanya boleh berisi huruf (a-z, A-Z), spasi, tanda hubung (-), atau apostrof (')."
                     .to_string()
                 );
             }
 
-            // Pemeriksaan tambahan: pastikan ada setidaknya satu huruf.
+            // Pastikan ada setidaknya satu huruf
             if !user_input.chars().any(|c| c.is_alphabetic()) {
                 return Err(
                     "Error sintaks: Nama lengkap harus mengandung setidaknya satu huruf."
@@ -250,15 +237,16 @@ fn pre_validate_syntactically(user_input: &str, input_type_str: &str) -> Result<
         }
         "nomor telepon indonesia" => {
             if user_input.len() < 9 || user_input.len() > 15 {
-                 return Err("Error sintaks: Panjang nomor telepon Indonesia tidak valid (harus antara 9-15 digit).".to_string());
+                return Err("Error sintaks: Panjang nomor telepon Indonesia tidak valid (harus antara 9-15 digit).".to_string());
             }
+            // Validasi format nomor telepon Indonesia
             static PHONE_ID_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^(\+62|0)8[0-9]{7,12}$").unwrap());
             if !PHONE_ID_REGEX.is_match(user_input) {
                 return Err("Error sintaks: Format nomor telepon Indonesia tidak valid. Harus diawali +628 atau 08 dan diikuti 7-12 digit angka.".to_string());
             }
         }
         _ => {
-            // Untuk tipe input lain, validasi sintaksis umum (panjang, tidak kosong) sudah dilakukan di atas.
+            // Untuk tipe input lain, validasi sintaksis umum sudah dilakukan di atas
         }
     }
     Ok(())
@@ -266,13 +254,13 @@ fn pre_validate_syntactically(user_input: &str, input_type_str: &str) -> Result<
 
 
 
-// --- Fungsi Helper untuk menghindari duplikasi kode ---
-fn format_prompt(user_input: &str, input_type_str: &str) -> String {
-    // Beritahu LLM bahwa validasi sintaksis dasar mungkin sudah dilakukan
-    // dan fokus pada aspek semantik/makna/aturan bisnis yang lebih kompleks.
+// --- Fungsi Helper untuk Formatting dan Parsing ---
+pub fn format_prompt(user_input: &str, input_type_str: &str) -> String {
+    // Catatan untuk LLM: fokus pada validitas semantik dan aturan bisnis
     let pre_validation_note = "Catatan: Input ini mungkin telah melewati pemeriksaan sintaksis dasar. \
                               Fokus pada validitas semantik, kewajaran, dan aturan spesifik (misalnya, domain contoh tidak diizinkan untuk email).";
 
+    // Format prompt berdasarkan tipe input
     match input_type_str.to_lowercase().as_str() {
         "alamat email" | "email" => format!(
             "{} Validasi alamat email berikut: \"{}\". \
@@ -300,6 +288,7 @@ fn format_prompt(user_input: &str, input_type_str: &str) -> String {
         _ => format!(
             "{} Validasi input berikut dari user, yang merupakan sebuah **{}**: \"{}\".\n\n\
              Berikan penilaian apakah input tersebut valid dan bermakna sebagai **{}** untuk penggunaan praktis. \
+             Jika input merupakan teks yang tidak jelas seperti Lorem ipsum dolor sit amet, maka berikan alasan dan saran perbaikan. \
              Jika ini adalah alamat email, TIDAK BOLEH menggunakan domain yang dicadangkan untuk contoh atau dokumentasi (seperti example.com, example.net, example.org, example.edu, atau domain .test, .localhost, .invalid). \
              Jika tidak valid karena alasan ini atau alasan lain, berikan alasan dan saran perbaikan. \
              Jawab dalam format JSON yang ketat seperti ini (tanpa markdown atau teks tambahan di luar JSON): \
@@ -312,7 +301,8 @@ fn format_prompt(user_input: &str, input_type_str: &str) -> String {
     }
 }
 
-fn común_body_generation(prompt: &str) -> serde_json::Value {
+// Fungsi untuk membuat body request ke Gemini API
+pub fn common_body_generation(prompt: &str) -> serde_json::Value {
     serde_json::json!({
         "contents": [ { "parts": [ { "text": prompt } ] } ],
         "safetySettings": [
@@ -326,9 +316,11 @@ fn común_body_generation(prompt: &str) -> serde_json::Value {
 }
 
 
-fn parse_gemini_response(
+// Fungsi untuk parsing respons dari Gemini API
+pub fn parse_gemini_response(
     gemini_api_response: GeminiApiResponse,
 ) -> Result<ValidationResponse, Box<dyn std::error::Error + Send + Sync>> {
+    // Ekstrak teks dari respons Gemini
     let model_generated_text_str: String = gemini_api_response
         .candidates
         .get(0)
@@ -338,7 +330,7 @@ fn parse_gemini_response(
 
     let clean_json_str = model_generated_text_str.trim();
 
-    // Pertama, parse sebagai Value untuk mendeteksi apakah array atau object
+    // Parse sebagai JSON Value untuk mendeteksi apakah array atau object
     let json_val: serde_json::Value = serde_json::from_str(clean_json_str).map_err(|e| {
         format!(
             "Gagal parse string ke JSON Value. Error: {}. Model output: '{}'",
@@ -346,14 +338,14 @@ fn parse_gemini_response(
         )
     })?;
 
-    // Cek apakah ini array, jika iya ambil elemen pertama
+    // Jika output berupa array, ambil elemen pertama
     let json_obj = if let Some(array) = json_val.as_array() {
         array.get(0).cloned().ok_or("Model output berupa array kosong")?
     } else {
         json_val
     };
 
-    // Lalu parse menjadi struct ValidationResponse
+    // Parse menjadi struct ValidationResponse
     let parsed: ValidationResponse = serde_json::from_value(json_obj).map_err(|e| {
         format!(
             "Gagal mem-parse JSON menjadi ValidationResponse. Error: {}. Model output: '{}'",

@@ -57,9 +57,7 @@ fn validate_text_py(py: Python, text: String, model_selector: &PySupportedModel,
         Err(e) => return Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("ApiConfig init error: {}", e))),
     };
 
-    // Tidak perlu lagi from_int jika kita percaya tipenya sudah benar dari Python
-    // atau kita bisa tetap validasi berdasarkan nilai integernya.
-    // Langsung gunakan varian Rust dari PySupportedModel
+
     let model_name = model_selector.variant.as_str();
     let model_selector_int = model_selector.variant as i32; // Jika masih perlu integer untuk logging atau error
 
