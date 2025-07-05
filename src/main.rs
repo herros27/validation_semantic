@@ -9,10 +9,11 @@ fn main() {
     println!("============================================================");
 
     let test_inputs = [
-        ("Kemas Khairunsyah", "Nama Lengkap"),
-        // ("Kemas Khairunsyah.", "Nama Lengkap"),
-        // ("Jl. Kapas No.9, Semaki, Kec. Umbulharjo, Kota Yogyakarta, DIY 55166", "Alamat Pengiriman"),
-        // ("Universitas Ahmad Dahlan", "Nama Institusi"),
+        ("Ayam Terbang", "Nama Lengkap"),
+        ("Kemas Khairunsyah.", "Nama Lengkap"),
+        ("Jl. Kapas No.9, Semaki, Kec. Umbulharjo, Kota Yogyakarta, DIY 55166", "Alamat Lengkap"),
+        ("Jl. Anggrek", "Alamat Lengkap"),
+        ("Universitas Ahmad Dahlan", "Nama Institusi"),
         // ("Irun2701", "Nama Pengguna"),
         // ("2200018155@webmail.uad.ac.id", "Email"),
         ("Loren ipsum dolor sit amet", "Teks Umum"),
@@ -36,6 +37,7 @@ fn main() {
         for (i, (test_input_str, input_type_str)) in test_inputs.iter().enumerate() {
             println!("\n🔍 Test Case {}: {}", i + 1, input_type_str);
             println!("   Input: \"{}\"", test_input_str);
+            println!("   Validasi Sintaksis: ");
 
             let c_input_text = match CString::new(*test_input_str) {
                 Ok(cs) => cs,
@@ -80,8 +82,9 @@ fn main() {
             match serde_json::from_str::<ValidationResponse>(&result_rust_string) {
                 Ok(parsed_response) => {
                     let status_icon = if parsed_response.valid { "✅" } else { "❌" };
-                    println!("   {} Valid: {}", status_icon, parsed_response.valid);
-                    println!("   📝 Message: {}", parsed_response.message);
+                    println!("   Validasi Semantik :  ");
+                    println!("      {} Valid: {}", status_icon, parsed_response.valid);
+                    println!("      📝 Message: {}", parsed_response.message);
                 }
                 Err(e) => {
                     eprintln!("❌ Gagal parse JSON: {}", e);

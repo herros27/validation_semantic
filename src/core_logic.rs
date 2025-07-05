@@ -90,7 +90,7 @@ pub fn validate_input_with_llm_sync(
     }
 
     // Tahap 2: Validasi Semantik dengan LLM
-    println!("[DEBUG] Sintaksis OK untuk '{}' ({}), melanjutkan ke validasi LLM.", user_input, input_type_str);
+    println!("      ✅ Validasi Sintaksis OK untuk '{}' ({}), melanjutkan ke validasi LLM.", user_input, input_type_str);
     let client = BlockingClient::builder()
         .timeout(std::time::Duration::from_secs(60))
         .build()?;
@@ -154,7 +154,7 @@ pub async fn validate_input_with_llm_async(
             .build()
             .map_err(|e| format!("Failed to build HTTP client: {}", e))?
     };
-    const API_KEY: &str = "AIzaSyCWnm_TMUb9Zr3HVN_iQOss6zsMwxheoHw";
+    const API_KEY: &str = "AIzaSyAv_Kb1i1VWg0fbscDGLQwJPYJEmsxLOYA";
     let endpoint = format!(
         "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}",
         model_name,
@@ -190,63 +190,62 @@ pub async fn validate_input_with_llm_async(
 
 // --- Fungsi Validasi Sintaksis Lokal ---
 pub fn pre_validate_syntactically(user_input: &str, input_type_str: &str) -> Result<(), String> {
-    // Validasi input dasar
-    if user_input.trim().is_empty() {
+    let input = user_input.trim();
+    let input_type = input_type_str.trim().to_lowercase();
+
+    if input.is_empty() {
         return Err("Input tidak boleh kosong.".to_string());
     }
 
-    // Batas panjang umum untuk mencegah input yang sangat besar
-    let lower_input_type = input_type_str.to_lowercase();
-    if lower_input_type != "deskripsi" && user_input.len() > 512 {
-        return Err("Input terlalu panjang (melebihi 512 karakter).".to_string());
+    if input_type != "deskripsi" && input.len() > 512 {
+        return Err("Input terlalu panjang (maksimal 512 karakter).".to_string());
     }
 
-    // Validasi spesifik berdasarkan tipe input
-    match input_type_str.to_lowercase().as_str() {
+    match input_type.as_str() {
         "alamat email" | "email" => {
-            if user_input.len() > 254 {
-                return Err("Error sintaks: Alamat email terlalu panjang (maks 254 karakter).".to_string());
+            if input.len() > 254 {
+                return Err("Alamat email terlalu panjang (maksimal 254 karakter).".to_string());
             }
-            // Validasi format email dengan regex
             static EMAIL_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[^\s@]+@[^\s@]+\.[^\s@]+$").unwrap());
-            if !EMAIL_REGEX.is_match(user_input) {
-                return Err("Error sintaks: Format alamat email tidak valid.".to_string());
+            if !EMAIL_REGEX.is_match(input) {
+                return Err("Format alamat email tidak valid.".to_string());
+            }
+            // Optional: Cek domain tidak boleh example/test/localhost/invalid
+            let domain = input.split('@').nth(1).unwrap_or("");
+            let forbidden = ["example.com", "example.org", "example.net", "test", "localhost", "invalid"];
+            if forbidden.iter().any(|d| domain.ends_with(d)) {
+                return Err("Domain email tidak boleh menggunakan domain contoh/test/localhost/invalid.".to_string());
             }
         }
         "nama lengkap" | "nama" => {
-            // Validasi karakter dan panjang nama (3-80 karakter)
-            static NAME_CHARS_LENGTH_REGEX: Lazy<Regex> = Lazy::new(|| {
-                Regex::new(r"^[a-zA-Z\s'-]{3,80}$").unwrap()
-            });
-
-            if !NAME_CHARS_LENGTH_REGEX.is_match(user_input) {
-                return Err(
-                    "Error sintaks: Nama lengkap harus terdiri dari 3 hingga 80 karakter \
-                    dan hanya boleh berisi huruf (a-z, A-Z), spasi, tanda hubung (-), atau apostrof (')."
-                    .to_string()
-                );
+            static NAME_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[a-zA-Z\s'-.]{3,80}$").unwrap());
+            if !NAME_REGEX.is_match(input) {
+                return Err("Nama hanya boleh berisi huruf, spasi, tanda hubung (-), atau apostrof ('). Panjang 3-80 karakter.".to_string());
             }
-
-            // Pastikan ada setidaknya satu huruf
-            if !user_input.chars().any(|c| c.is_alphabetic()) {
-                return Err(
-                    "Error sintaks: Nama lengkap harus mengandung setidaknya satu huruf."
-                    .to_string()
-                );
+            if !input.chars().any(|c| c.is_alphabetic()) {
+                return Err("Nama harus mengandung setidaknya satu huruf.".to_string());
+            }
+            if input.contains("  ") {
+                return Err("Nama tidak boleh mengandung dua spasi berurutan.".to_string());
+            }
+            if input.starts_with(' ') || input.ends_with(' ') {
+                return Err("Nama tidak boleh diawali atau diakhiri spasi.".to_string());
             }
         }
         "nomor telepon indonesia" => {
-            if user_input.len() < 9 || user_input.len() > 15 {
-                return Err("Error sintaks: Panjang nomor telepon Indonesia tidak valid (harus antara 9-15 digit).".to_string());
+            if input.len() < 9 || input.len() > 15 {
+                return Err("Panjang nomor telepon Indonesia tidak valid (9-15 digit).".to_string());
             }
-            // Validasi format nomor telepon Indonesia
             static PHONE_ID_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^(\+62|0)8[0-9]{7,12}$").unwrap());
-            if !PHONE_ID_REGEX.is_match(user_input) {
-                return Err("Error sintaks: Format nomor telepon Indonesia tidak valid. Harus diawali +628 atau 08 dan diikuti 7-12 digit angka.".to_string());
+            if !PHONE_ID_REGEX.is_match(input) {
+                return Err("Format nomor telepon Indonesia tidak valid. Harus diawali +628 atau 08 dan diikuti 7-12 digit angka.".to_string());
+            }
+            if input.contains(' ') {
+                return Err("Nomor telepon tidak boleh mengandung spasi.".to_string());
             }
         }
         _ => {
-            // Untuk tipe input lain, validasi sintaksis umum sudah dilakukan di atas
+            // Validasi umum sudah dilakukan di atas
         }
     }
     Ok(())
@@ -256,47 +255,58 @@ pub fn pre_validate_syntactically(user_input: &str, input_type_str: &str) -> Res
 
 // --- Fungsi Helper untuk Formatting dan Parsing ---
 pub fn format_prompt(user_input: &str, input_type_str: &str) -> String {
-    // Catatan untuk LLM: fokus pada validitas semantik dan aturan bisnis
-    let pre_validation_note = "Catatan: Input ini mungkin telah melewati pemeriksaan sintaksis dasar. \
-                              Fokus pada validitas semantik, kewajaran, dan aturan spesifik (misalnya, domain contoh tidak diizinkan untuk email).";
+    let pre_validation_note = "Catatan: Input ini sudah melewati validasi sintaksis dasar. \
+        Fokuskan pada validitas semantik, kewajaran, dan aturan bisnis yang relevan. \
+        Tolak input yang tidak bermakna, dummy, atau asal-asalan.";
 
-    // Format prompt berdasarkan tipe input
     match input_type_str.to_lowercase().as_str() {
         "alamat email" | "email" => format!(
-            "{} Validasi alamat email berikut: \"{}\". \
-             Pastikan formatnya benar, domainnya terlihat valid dan BUKAN domain contoh (seperti example.com, example.org, .test, .localhost, .invalid). \
-             Alamat email juga tidak boleh lebih dari 254 karakter. \
-             Jawab dalam format JSON: {{ \"valid\": true|false, \"message\": \"penjelasan\" }}",
-            pre_validation_note, user_input.replace("\"", "\\\"")
+            "{note}\nValidasi alamat email berikut: \"{input}\".\n\
+            - Pastikan format dan domain valid, BUKAN domain contoh (example.com, example.org, .test, .localhost, .invalid).\n\
+            - Tolak email dengan domain dummy, disposable, atau tidak profesional.\n\
+            - Email tidak boleh lebih dari 254 karakter.\n\
+            - Jika email tidak valid, berikan alasan spesifik dan saran perbaikan.\n\
+            Jawab HANYA dalam format JSON berikut (tanpa teks tambahan): \
+            {{ \"valid\": true|false, \"message\": \"penjelasan\" }}",
+            note = pre_validation_note,
+            input = user_input.replace("\"", "\\\"")
         ),
         "nama lengkap" | "nama" => format!(
-            "{} Validasi nama lengkap berikut: \"{}\". \
-             Nama lengkap seharusnya hanya mengandung huruf, spasi, dan mungkin tanda hubung atau apostrof tunggal. \
-             Tidak boleh mengandung angka atau simbol aneh. Panjangnya wajar. \
-             Periksa juga apakah nama ini terlihat seperti nama manusia yang sesungguhnya (bukan sekumpulan karakter acak). \
-             Jawab dalam format JSON: {{ \"valid\": true|false, \"message\": \"penjelasan\" }}",
-            pre_validation_note, user_input.replace("\"", "\\\"")
+            "{note}\nValidasi nama lengkap berikut: \"{input}\".\n\
+            - Nama hanya boleh berisi huruf, spasi, tanda hubung (-), atau apostrof (').\n\
+            - Tolak nama yang mengandung angka, simbol aneh, atau karakter acak.\n\
+            - Tolak nama yang tidak wajar (misal: 'asdf', 'qwerty', 'Lorem ipsum', 'Nama Saya', dsb).\n\
+            - Nama harus terlihat seperti nama manusia asli, bukan dummy atau placeholder.\n\
+            - Panjang nama 3-80 karakter, tidak boleh dua spasi berurutan, tidak diawali/diakhiri spasi.\n\
+            - Jika tidak valid, berikan alasan dan saran perbaikan.\n\
+            Jawab HANYA dalam format JSON berikut (tanpa teks tambahan): \
+            {{ \"valid\": true|false, \"message\": \"penjelasan\" }}",
+            note = pre_validation_note,
+            input = user_input.replace("\"", "\\\"")
         ),
         "nomor telepon indonesia" => format!(
-            "{} Validasi nomor telepon Indonesia berikut: \"{}\". \
-             Nomor telepon Indonesia seharusnya hanya mengandung angka, diawali dengan +62 atau 08. \
-             Tidak boleh mengandung simbol aneh atau huruf. Panjangnya wajar untuk nomor Indonesia. \
-             Periksa juga apakah nomor ini masuk akal (misalnya, bukan 080000000). \
-             Jawab dalam format JSON: {{ \"valid\": true|false, \"message\": \"penjelasan\" }}",
-            pre_validation_note, user_input.replace("\"", "\\\"")
+            "{note}\nValidasi nomor telepon Indonesia berikut: \"{input}\".\n\
+            - Nomor hanya boleh angka, diawali +62 atau 08, tanpa spasi/simbol.\n\
+            - Panjang 9-15 digit, tidak boleh dummy (misal: 080000000, 081234567).\n\
+            - Tolak nomor yang tidak masuk akal atau terlalu berurutan (misal: 0811111111).\n\
+            - Jika tidak valid, berikan alasan dan saran perbaikan.\n\
+            Jawab HANYA dalam format JSON berikut (tanpa teks tambahan): \
+            {{ \"valid\": true|false, \"message\": \"penjelasan\" }}",
+            note = pre_validation_note,
+            input = user_input.replace("\"", "\\\"")
         ),
         _ => format!(
-            "{} Validasi input berikut dari user, yang merupakan sebuah **{}**: \"{}\".\n\n\
-             Berikan penilaian apakah input tersebut valid dan bermakna sebagai **{}** untuk penggunaan praktis. \
-             Jika input merupakan teks yang tidak jelas seperti Lorem ipsum dolor sit amet, maka berikan alasan dan saran perbaikan. \
-             Jika ini adalah alamat email, TIDAK BOLEH menggunakan domain yang dicadangkan untuk contoh atau dokumentasi (seperti example.com, example.net, example.org, example.edu, atau domain .test, .localhost, .invalid). \
-             Jika tidak valid karena alasan ini atau alasan lain, berikan alasan dan saran perbaikan. \
-             Jawab dalam format JSON yang ketat seperti ini (tanpa markdown atau teks tambahan di luar JSON): \
-             {{ \"valid\": true|false, \"message\": \"penjelasan\" }}",
-            pre_validation_note,
-            input_type_str,
-            user_input.replace("\"", "\\\""),
-            input_type_str
+            "{note}\nValidasi input berikut dari user, bertipe \"{type_str}\": \"{input}\"\n\
+            - Tolak input yang tidak bermakna, dummy, placeholder, atau asal-asalan (misal: 'Lorem ipsum', 'asdf', 'qwerty', 'Teks Umum', dsb).\n\
+            - Jika input adalah email, domain tidak boleh domain contoh/dummy.\n\
+            - Jika input adalah nama, harus terlihat seperti nama manusia asli.\n\
+            - Jika input adalah nomor telepon, harus masuk akal dan sesuai format Indonesia.\n\
+            - Jika tidak valid, berikan alasan dan saran perbaikan.\n\
+            Jawab HANYA dalam format JSON berikut (tanpa teks tambahan): \
+            {{ \"valid\": true|false, \"message\": \"penjelasan\" }}",
+            note = pre_validation_note,
+            type_str = input_type_str,
+            input = user_input.replace("\"", "\\\"")
         ),
     }
 }

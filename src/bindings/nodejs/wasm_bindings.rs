@@ -71,16 +71,16 @@ pub fn get_supported_model_selectors() -> JsValue {
 
     if let Err(e) = js_sys::Reflect::set(
         &models,
-        &JsValue::from_str("GEMINI_2_FLASH"),
-        &JsValue::from_f64(SupportedModel::Gemini2Flash as i32 as f64)
+        &JsValue::from_str("GEMINI_2_5_FLASH"),
+        &JsValue::from_f64(SupportedModel::Gemini25Flash as i32 as f64)
     ) {
         handle_set_error(e);
     }
 
     if let Err(e) = js_sys::Reflect::set(
         &models,
-        &JsValue::from_str("GEMINI_2_FLASH_LITE"),
-        &JsValue::from_f64(SupportedModel::Gemini2FlashLite as i32 as f64)
+        &JsValue::from_str("GEMINI_2_5_FLASH_LITE"),
+        &JsValue::from_f64(SupportedModel::Gemini25FlashLite as i32 as f64)
     ) {
         handle_set_error(e);
     }
@@ -95,8 +95,8 @@ pub fn get_supported_model_selectors() -> JsValue {
 
     if let Err(e) = js_sys::Reflect::set(
         &models,
-        &JsValue::from_str("GEMINI_1_5_PRO"),
-        &JsValue::from_f64(SupportedModel::Gemini15Pro as i32 as f64)
+        &JsValue::from_str("GEMINI_2_5_PRO"),
+        &JsValue::from_f64(SupportedModel::Gemini25Pro as i32 as f64)
     ) {
         handle_set_error(e);
     }
