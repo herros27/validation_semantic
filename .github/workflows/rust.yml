@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CARGO_TERM_COLOR: always
-      GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+      GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY}}
 
     steps:
       - name: Checkout repository
