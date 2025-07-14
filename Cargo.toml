@@ -19,15 +19,15 @@ js-sys = "0.3"
 web-sys = { version = "0.3", features = ["console"] }
 # reqwest dibuat opsional dan default-features = false.
 # Fitur spesifik ("json", "blocking", "rustls-tls", "wasm-bindgen") akan diaktifkan HANYA melalui fitur Cargo kita.
-reqwest = { version = "0.12", default-features = false, optional = true }
+reqwest = { version = "0.12.22", default-features = false, optional = true }
 regex = "1"
 # Dependensi opsional lainnya
 wasm-bindgen = { version = "0.2.92", optional = true }
 wasm-bindgen-futures = { version = "0.4.42", optional = true }
 serde-wasm-bindgen = { version = "0.6.5", optional = true }
 console_error_panic_hook = { version = "0.1.7", optional = true }
-pyo3 = { version = "0.25.0", features = ["extension-module"], optional = true }
-tokio = { version = "1", features = ["rt-multi-thread", "macros"], optional = true }
+pyo3 = { version = "0.25.1", features = ["extension-module"], optional = true }
+tokio = { version = "1.46.1", features = ["rt-multi-thread", "macros"], optional = true }
 
 [profile.release]
 lto = true
