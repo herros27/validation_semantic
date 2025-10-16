@@ -4,7 +4,7 @@ name: Build and Publish Maturin Wheels
 on:
   push:
     tags:
-      - "v*" # Contoh: v0.1.0, v1.0.1
+      - "v*" # contoh: v0.1.0, v1.0.1
 
 permissions:
   contents: write
@@ -64,3 +64,13 @@ jobs:
           files: dist/**/*.whl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 🧩 Tambahan: Publish ke TestPyPI
+      - name: Publish to TestPyPI
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        run: |
+          pip install twine
+          twine upload --repository-url https://test.pypi.org/legacy/ dist/**/*.whl
