@@ -34,16 +34,6 @@ Pastikan Anda memiliki Python 3.7 atau versi yang lebih baru.
     ```bash
     pip install -i https://test.pypi.org/simple/ validation-semantic
     ```
-    Jika belum, Anda bisa menginstalnya dari direktori lokal:
-    ```bash
-    pip install .
-    ```
-
-2.  **Instal dependensi** yang dibutuhkan oleh library ini, yaitu Google Generative AI:
-    ```bash
-    pip install google-generativeai
-    ```
-
 ---
 
 ## 🔑 Konfigurasi
