@@ -32,7 +32,7 @@ Pastikan Anda memiliki Python 3.7 atau versi yang lebih baru.
 
 1.  **Instal library ini** (Asumsi jika sudah di-publish ke PyPI):
     ```bash
-    pip install validation_semantic
+    pip install -i https://test.pypi.org/simple/ validation-semantic
     ```
     Jika belum, Anda bisa menginstalnya dari direktori lokal:
     ```bash
