@@ -38,5 +38,5 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: maturin-wheel
+          name: maturin-wheel-${{ matrix.os }}
           path: target/wheels/*.whl
