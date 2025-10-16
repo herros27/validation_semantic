@@ -2,8 +2,10 @@
 name: Publish to GitHub Release
 
 on:
-  release:
-    types: [created]
+  push:
+    tags:
+      - 'v*'  # Contoh: v0.1.0, v1.0.1
+
 
 permissions:
   contents: write
