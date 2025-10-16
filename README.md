@@ -106,17 +106,10 @@ Fungsi `validate_input_py` akan mengembalikan sebuah dictionary (yang dapat di-s
 {
     "valid": true,
     "message": "Input 'PT Mencari Cinta Sejati' adalah nama perusahaan yang valid dan umum di Indonesia.",
-    "corrected_input": "PT Mencari Cinta Sejati",
-    "reasoning": "Input memiliki format nama perusahaan yang umum di Indonesia dengan prefix 'PT' yang berarti Perseroan Terbatas. Nama tersebut terdengar seperti nama perusahaan sungguhan meskipun bersifat fiktif.",
-    "confidence_score": 0.95
 }
 ```
 - **`valid`** (`bool`): `true` jika input dianggap valid, `false` jika tidak.
 - **`message`** (`str`): Pesan ringkas yang menjelaskan hasil validasi.
-- **`corrected_input`** (`str`): Saran perbaikan input jika ada kesalahan kecil.
-- **`reasoning`** (`str`): Penjelasan dari model mengapa input tersebut dianggap valid atau tidak.
-- **`confidence_score`** (`float`): Skor kepercayaan model terhadap hasil validasinya (antara 0.0 hingga 1.0).
-
 ---
 
 ## 📚 Referensi API
