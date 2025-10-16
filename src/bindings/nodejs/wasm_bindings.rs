@@ -1,7 +1,7 @@
 #![cfg(target_arch = "wasm32")]
 
-use wasm_bindgen::prelude::*;
-use js_sys; // Pastikan js_sys diimpor
+use js_sys;
+use wasm_bindgen::prelude::*; // Pastikan js_sys diimpor
 
 // Impor tipe dan fungsi async dari core_logic
 use crate::core_logic::{
@@ -17,12 +17,13 @@ pub fn init_panic_hook() {
     console_error_panic_hook::set_once();
 }
 
-#[wasm_bindgen(js_name = validateTextJs)]
+#[wasm_bindgen(js_name = validateInput)]
 pub async fn validate_text_js(
     text: String,
     model_selector_int: i32,
     input_type: String,
-) -> Result<JsValue, JsValue> { // Mengembalikan Result<JsValue, JsValue> untuk error handling ke JS
+) -> Result<JsValue, JsValue> {
+    // Mengembalikan Result<JsValue, JsValue> untuk error handling ke JS
 
     // 1. Mapping angka ke enum model (seperti yang sudah Anda lakukan di React)
     let model_variant = match crate::core_logic::SupportedModel::from_int(model_selector_int) {
@@ -65,38 +66,41 @@ pub fn get_supported_model_selectors() -> JsValue {
 
     // Helper closure untuk menangani error set (opsional)
     let handle_set_error = |err: JsValue| {
-        web_sys::console::error_2(&JsValue::from_str("Failed to set property on JS object:"), &err);
+        web_sys::console::error_2(
+            &JsValue::from_str("Failed to set property on JS object:"),
+            &err,
+        );
         // Anda bisa memilih untuk panic atau tindakan lain di sini jika error ini kritikal
     };
 
     if let Err(e) = js_sys::Reflect::set(
         &models,
-        &JsValue::from_str("GEMINI_2_5_FLASH"),
-        &JsValue::from_f64(SupportedModel::Gemini25Flash as i32 as f64)
+        &JsValue::from_str("GEMINI_FLASH"),
+        &JsValue::from_f64(SupportedModel::GeminiFlash as i32 as f64),
     ) {
         handle_set_error(e);
     }
 
     if let Err(e) = js_sys::Reflect::set(
         &models,
-        &JsValue::from_str("GEMINI_2_5_FLASH_LITE"),
-        &JsValue::from_f64(SupportedModel::Gemini25FlashLite as i32 as f64)
+        &JsValue::from_str("GEMINI_FLASH_LITE"),
+        &JsValue::from_f64(SupportedModel::GeminiFlashLite as i32 as f64),
     ) {
         handle_set_error(e);
     }
 
     if let Err(e) = js_sys::Reflect::set(
         &models,
-        &JsValue::from_str("GEMINI_1_5_FLASH"),
-        &JsValue::from_f64(SupportedModel::Gemini15Flash as i32 as f64)
+        &JsValue::from_str("GEMINI_FLASH_LATEST"),
+        &JsValue::from_f64(SupportedModel::GeminiFlashLatest as i32 as f64),
     ) {
         handle_set_error(e);
     }
 
     if let Err(e) = js_sys::Reflect::set(
         &models,
-        &JsValue::from_str("GEMINI_2_5_PRO"),
-        &JsValue::from_f64(SupportedModel::Gemini25Pro as i32 as f64)
+        &JsValue::from_str("GEMMA"),
+        &JsValue::from_f64(SupportedModel::Gemma as i32 as f64),
     ) {
         handle_set_error(e);
     }

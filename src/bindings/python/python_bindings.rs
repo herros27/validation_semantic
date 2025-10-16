@@ -1,44 +1,33 @@
-// src/bindings/python/python_bindings.rs
 #![cfg(feature = "python_bindings_feature")]
 
+use crate::core_logic::{
+    validate_input_with_llm_sync,
+    SupportedModel as RustSupportedModel,
+    API_CONFIG,
+};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
-use crate::core_logic::{
- SupportedModel as RustSupportedModel // Ganti nama impor agar tidak bentrok
-    , API_CONFIG, validate_input_with_llm_sync
-};
 
-// Buat wrapper class Python untuk enum Rust
-#[pyclass(name = "SupportedModel")] // Nama kelas di Python
+// ----------------------------
+// PyClass: SupportedModel
+// ----------------------------
+#[pyclass(name = "SupportedModel")]
 #[derive(Clone, Copy, Debug)]
-struct PySupportedModel {
-    variant: RustSupportedModel, // Simpan varian Rust enum di dalamnya
+pub struct PySupportedModel {
+    variant: RustSupportedModel,
 }
 
+#[allow(non_upper_case_globals)]
 #[pymethods]
 impl PySupportedModel {
-    // Ekspos setiap varian enum sebagai static property dari kelas Python
     #[classattr]
-    #[pyo3(name = "GEMINI_2_FLASH")] // Nama atribut di Python
-    const GEMINI_2_FLASH: Self = Self { variant: RustSupportedModel::Gemini2Flash };
-
+    const GeminiFlash: Self = Self { variant: RustSupportedModel::GeminiFlash };
     #[classattr]
-    #[pyo3(name = "GEMINI_2_FLASH_LITE")]
-    const GEMINI_2_FLASH_LITE: Self = Self { variant: RustSupportedModel::Gemini2FlashLite };
-
+    const GeminiFlashLite: Self = Self { variant: RustSupportedModel::GeminiFlashLite };
     #[classattr]
-    #[pyo3(name = "GEMINI_1_5_FLASH")]
-    const GEMINI_1_5_FLASH: Self = Self { variant: RustSupportedModel::Gemini15Flash };
-
+    const GeminiFlashLatest: Self = Self { variant: RustSupportedModel::GeminiFlashLatest };
     #[classattr]
-    #[pyo3(name = "GEMINI_1_5_PRO")]
-    const GEMINI_1_5_PRO: Self = Self { variant: RustSupportedModel::Gemini15Pro };
-
-    // Anda mungkin ingin menambahkan metode __int__ atau properti value
-    // agar mudah mendapatkan nilai integernya jika diperlukan
-    fn __int__(&self) -> i32 {
-        self.variant as i32
-    }
+    const Gemma: Self = Self { variant: RustSupportedModel::Gemma };
 
     fn __repr__(&self) -> String {
         format!("<SupportedModel.{:?}>", self.variant)
@@ -50,17 +39,26 @@ impl PySupportedModel {
     }
 }
 
+// ----------------------------
+// Fungsi PyO3
+// ----------------------------
 #[pyfunction]
-fn validate_text_py(py: Python, text: String, model_selector: &PySupportedModel, input_type: String) -> PyResult<PyObject> { // Terima &PySupportedModel
+fn validate_input_py(
+    py: Python,
+    text: String,
+    model_selector: &PySupportedModel,
+    input_type: String,
+) -> PyResult<PyObject> {
     let config = match &*API_CONFIG {
         Ok(cfg) => cfg,
-        Err(e) => return Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("ApiConfig init error: {}", e))),
+        Err(e) => {
+            return Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
+                format!("ApiConfig init error: {}", e),
+            ))
+        }
     };
 
-
     let model_name = model_selector.variant.as_str();
-    let model_selector_int = model_selector.variant as i32; // Jika masih perlu integer untuk logging atau error
-
     match validate_input_with_llm_sync(&text, model_name, &input_type, config) {
         Ok(validation_response) => {
             let dict = PyDict::new(py);
@@ -69,19 +67,24 @@ fn validate_text_py(py: Python, text: String, model_selector: &PySupportedModel,
             Ok(dict.into())
         }
         Err(e) => Err(PyErr::new::<pyo3::exceptions::PyException, _>(
-            format!("Validation error with model '{}' (selector: {}): {}", model_name, model_selector_int, e)
+            format!("Validation error with model '{}': {}", model_name, e),
         )),
     }
 }
 
-pub fn register_items_for_python_module(_py: Python, parent_module: &Bound<PyModule>) -> PyResult<()> {
-    parent_module.add_wrapped(wrap_pyfunction!(validate_text_py))?;
-    parent_module.add_class::<PySupportedModel>()?; // Daftarkan kelas PySupportedModel
+// ----------------------------
+// Registrasi ke modul Python
+// ----------------------------
+pub fn register_items_for_python_module(
+    _py: Python,
+    parent_module: &Bound<PyModule>,
+) -> PyResult<()> {
+    parent_module.add_wrapped(wrap_pyfunction!(validate_input_py))?;
+    parent_module.add_class::<PySupportedModel>()?;
 
-      // Menggunakan RustSupportedModel untuk mendapatkan nilai integer konstanta
-    parent_module.add("MODEL_GEMINI_2_FLASH", RustSupportedModel::Gemini2Flash as i32)?;
-    parent_module.add("MODEL_GEMINI_2_FLASH_LITE", RustSupportedModel::Gemini2FlashLite as i32)?;
-    parent_module.add("MODEL_GEMINI_1_5_FLASH", RustSupportedModel::Gemini15Flash as i32)?;
-    parent_module.add("MODEL_GEMINI_1_5_PRO", RustSupportedModel::Gemini15Pro as i32)?;
+    parent_module.add("GEMINI_FLASH", RustSupportedModel::GeminiFlash as i32)?;
+    parent_module.add("GEMINI_FLASH_LITE", RustSupportedModel::GeminiFlashLite as i32)?;
+    parent_module.add("GEMINI_FLASH_LATEST", RustSupportedModel::GeminiFlashLatest as i32)?;
+    parent_module.add("GEMMA", RustSupportedModel::Gemma as i32)?;
     Ok(())
 }
