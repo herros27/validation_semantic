@@ -2,7 +2,7 @@ name: Build Maturin Package
 
 on:
   push:
-    branches: [ main ]
+    branches: ["master"]
   pull_request:
 
 jobs:
