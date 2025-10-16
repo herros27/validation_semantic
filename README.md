@@ -28,7 +28,7 @@ Ikuti langkah-langkah ini untuk mengkompilasi dan menggunakan *core library* Rus
 
 ## ⚙️ Instalasi
 
-Pastikan Anda memiliki Python 3.7 atau versi yang lebih baru.
+Pastikan Anda memiliki Python 3.8 atau versi yang lebih baru.
 
 1.  **Instal library ini** (Asumsi jika sudah di-publish ke PyPI):
     ```bash
