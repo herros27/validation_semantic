@@ -45,29 +45,4 @@ jobs:
           name: maturin-wheel-${{ matrix.os }}
           path: target/wheels/*.whl
 
-  release:
-    # hanya jalan jika event-nya release (bukan push biasa)
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.event_name == 'release'
-
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # 1️⃣ Download semua artifact dari job build
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: dist
-
-      # 2️⃣ Upload ke GitHub Release
-      - name: Upload wheels to GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: dist/**/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+ 
