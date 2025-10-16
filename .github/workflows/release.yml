@@ -1,24 +1,23 @@
 # .github/workflows/release.yml
-name: Publish to GitHub Release
+name: Build and Publish Maturin Wheels
 
 on:
   push:
     tags:
-      - 'v*'  # Contoh: v0.1.0, v1.0.1
-
+      - "v*" # Contoh: v0.1.0, v1.0.1
 
 permissions:
   contents: write
 
 jobs:
-  publish:
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-      - name: Checkout repository
+      - name: Checkout source code
         uses: actions/checkout@v4
 
       - name: Setup Python
@@ -35,9 +34,33 @@ jobs:
       - name: Build wheel
         run: maturin build --release --features python_bindings_feature
 
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: maturin-wheel-${{ matrix.os }}
+          path: target/wheels/*.whl
+
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all wheels
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: List downloaded files
+        run: ls -R dist
+
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          files: target/wheels/*.whl
+          files: dist/**/*.whl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
