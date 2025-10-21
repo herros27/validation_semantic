@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # pastikan semua history dan tag tersedia
 
       - name: Fetch all tags
         run: git fetch --tags
@@ -29,18 +31,21 @@ jobs:
           echo "Latest tag: $LATEST_TAG"
           echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
 
-      - name: Increment patch version
+      - name: Increment patch version and push tag
         id: set_tag
         run: |
           IFS='.' read -r MAJOR MINOR PATCH <<< "${LATEST_TAG#v}"
           PATCH=$((PATCH+1))
           NEW_TAG="v${MAJOR}.${MINOR}.${PATCH}"
           echo "New tag: $NEW_TAG"
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag $NEW_TAG
           git push origin $NEW_TAG
-          echo "::set-output name=new_tag::$NEW_TAG"
+
+          # set output yang baru
+          echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
 
   build:
     name: Build Wheels
