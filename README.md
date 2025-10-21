@@ -230,7 +230,6 @@ print(json.dumps(result, indent=4, ensure_ascii=False))
 
 ## 📦 Validasi Banyak Input Sekaligus (Batch Validation) dengan python
 
-Jika kamu tidak menggunakan GUI (misalnya untuk CLI, backend, atau testing), kamu bisa membuat versi `BatchValidationWorker` tanpa `QObject` dan `Signal`.
 
 ### Kode Lengkap:
 
