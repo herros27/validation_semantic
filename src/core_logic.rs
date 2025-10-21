@@ -157,11 +157,11 @@ pub fn validate_input_with_llm_sync(
 
 
 // --- Fungsi Validasi dengan LLM (Asinkron) ---
-pub async fn validate_input_with_llm_async(
+pub async fn validate_input_with_llm_async( //ubah biar parameter nya API_KEY gemini
     user_input: &str,
     model_name: &str,
     input_type_str: &str,
-    // config: &ApiConfig,
+    gemini_api_key: &str,
 ) -> Result<ValidationResponse, Box<dyn std::error::Error + Send + Sync>> {
     // Tahap 1: Validasi Sintaksis Lokal
     if let Err(syntax_error_message) = pre_validate_syntactically(user_input, input_type_str) {
@@ -186,10 +186,10 @@ pub async fn validate_input_with_llm_async(
             .build()
             .map_err(|e| format!("Failed to build HTTP client: {}", e))?
     };
-    const API_KEY: &str = "AIzaSyAv_Kb1i1VWg0fbscDGLQwJPYJEmsxLOYA";
+    // const API_KEY: &str = "AIzaSyAv_Kb1i1VWg0fbscDGLQwJPYJEmsxLOYA";
     let endpoint = format!(
         "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}",
-        model_name, API_KEY
+        model_name, gemini_api_key
     );
     let prompt = format_prompt(user_input, input_type_str);
     let body = common_body_generation(&prompt, model_name);

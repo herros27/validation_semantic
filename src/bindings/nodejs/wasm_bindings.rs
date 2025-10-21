@@ -22,6 +22,7 @@ pub async fn validate_text_js(
     text: String,
     model_selector_int: i32,
     input_type: String,
+    gemini_api_key: String,
 ) -> Result<JsValue, JsValue> {
     // Mengembalikan Result<JsValue, JsValue> untuk error handling ke JS
 
@@ -42,7 +43,7 @@ pub async fn validate_text_js(
     // 2. Panggil fungsi inti dari core_logic
     // Perhatikan path ke validate_input_with_llm_async mungkin perlu disesuaikan
     // tergantung struktur modul Anda (misalnya, crate::core_logic::...)
-    match crate::core_logic::validate_input_with_llm_async(&text, model_name, &input_type).await {
+    match crate::core_logic::validate_input_with_llm_async(&text, model_name, &input_type, &gemini_api_key).await {//ubah biar parameter nya API_KEY gemini
         Ok(validation_response_rust) => {
             // 3. Serialisasi hasil Rust (ValidationResponse) ke JsValue
             match serde_wasm_bindgen::to_value(&validation_response_rust) {

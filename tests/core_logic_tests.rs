@@ -323,7 +323,7 @@ async fn test_validate_input_with_llm_async_integration() {
                 println!("   Testing: '{}' ({})", input, input_type);
 
                 let result =
-                    validate_input_with_llm_async(input, "gemini-2.0-flash", input_type).await;
+                    validate_input_with_llm_async(input, "gemini-2.0-flash", input_type, _config).await;
 
                 match result {
                     Ok(response) => {
