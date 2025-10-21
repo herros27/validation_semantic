@@ -30,8 +30,9 @@ Kekuatan utama *library* ini terletak pada kemampuannya untuk diintegrasikan ke 
    * [🚀 Cara Penggunaan untuk Python](#-cara-penggunaan-untuk-python)
 5. [📦 Validasi Banyak Input Sekaligus (Batch Validation)](#-validasi-banyak-input-sekaligus-batch-validation)
 6. [🖥️ Menjalankan Contoh Aplikasi GUI (Desktop dengan Python)](#️-menjalankan-contoh-aplikasi-gui-dekstop-dengan-python-)
-7. [🤝 Kontribusi](#-kontribusi)
-8. [📄 Lisensi](#-lisensi)
+7. [🧩 Jenis Input yang Dapat Divalidasi)](#️-jenis-input-yang-dapat-divalidasi-)
+8. [🤝 Kontribusi](#-kontribusi)
+9. [📄 Lisensi](#-lisensi)
 
 ---
 
@@ -233,6 +234,36 @@ Semua hasil dikirim kembali ke GUI melalui sinyal `finished`.
 pip install PySide6
 python main_app.py
 ```
+
+---
+
+## 🧩 Jenis Input yang Dapat Divalidasi
+
+Library `validation_semantic` mendukung berbagai jenis input teks yang umum digunakan dalam aplikasi bisnis, akademik, maupun personal.
+Berikut daftar lengkap jenis input yang dapat divalidasi beserta **fungsi atau konteks penggunaannya**:
+
+| 🏷️ **Jenis Input**                                                           | 🧠 **Deskripsi Validasi**                                                                                  | 💡 **Contoh Input**                         |
+| ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `alamat email`, `email`                                                       | Memvalidasi format dan kesahihan alamat email.                                                             | `user@example.com`                          |
+| `nama institusi`, `nama lembaga`, `institusi`, `lembaga`                      | Mengecek kesesuaian nama lembaga atau institusi resmi.                                                     | `Universitas Indonesia`, `LIPI`             |
+| `nama perusahaan`                                                             | Memastikan nama perusahaan valid dan umum digunakan.                                                       | `PT Sinar Mentari`                          |
+| `nama produk`                                                                 | Memeriksa nama produk atau merek agar sesuai konteks industri.                                             | `Indomie`, `Aqua`, `iPhone 15`              |
+| `nama lokasi`, `lokasi`, `tempat`                                             | Mengevaluasi apakah teks merupakan nama lokasi atau wilayah yang sah.                                      | `Jakarta Selatan`, `Bandung`, `Paris`       |
+| `nama lengkap`, `nama`                                                        | Validasi nama lengkap pengguna sesuai pola umum nama orang.                                                | `Budi Santoso`, `Kemas Khairunsyah`         |
+| `judul`                                                                       | Mengecek apakah teks sesuai untuk digunakan sebagai judul dokumen, artikel, atau karya ilmiah.             | `Analisis Dampak Teknologi AI di Indonesia` |
+| `pekerjaan`                                                                   | Memastikan teks merupakan jabatan atau profesi yang dikenal umum.                                          | `Software Engineer`, `Dokter`, `Guru`       |
+| `tag`                                                                         | Validasi tag pendek yang biasanya digunakan untuk pengelompokan atau kategorisasi.                         | `AI`, `Teknologi`, `Pendidikan`             |
+| `alamat`                                                                      | Memeriksa struktur alamat agar sesuai dengan format umum.                                                  | `Jl. Merdeka No.10, Bandung`                |
+| `text area`, `teks area`, `konten`, `deskripsi`, `blog`, `cerita`, `komentar` | Validasi teks panjang (paragraf) untuk memastikan isi bermakna, tidak kosong, dan sesuai konteks semantik. | `Saya sangat puas dengan produk ini!`       |
+
+---
+
+🧠 **Catatan:**
+
+* Semua jenis input di atas **bersifat fleksibel** — sistem akan mengenali label yang mirip (misalnya `nama institusi` dan `lembaga` akan diproses sama).
+* Validasi tidak hanya berdasarkan format (regex), tetapi juga **semantik dan konteks makna** dengan bantuan model bahasa.
+
+---
 
 ---
 
