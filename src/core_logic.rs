@@ -155,7 +155,6 @@ pub fn validate_input_with_llm_sync(
     }
 }
 
-
 // --- Fungsi Validasi dengan LLM (Asinkron) ---
 pub async fn validate_input_with_llm_async( //ubah biar parameter nya API_KEY gemini
     user_input: &str,
