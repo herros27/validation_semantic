@@ -275,6 +275,9 @@ if __name__ == "__main__":
     model = SupportedModel.GeminiFlash
     worker = BatchValidationWorker(user_inputs, model)
     results = worker.run()
+    json_output = json.dumps(results, indent=4, ensure_ascii=False)
+    print("\n=== Hasil Validasi Batch ===")
+    print(json_output)
 
     for label, info in results.items():
         print(f"[{label}]")
@@ -300,6 +303,28 @@ if __name__ == "__main__":
 [alamat]
  Input: error di sini
  ❌ Error: Input 'alamat' mengandung kata 'error'
+```
+### JSON Output:
+
+```json
+{
+  'nama': {
+    'input': 'John Doe',
+    'result': {'valid': True, 'message': 'Nama valid.'},
+    'error': None
+  },
+  'email': {
+    'input': 'john@example.com',
+    'result': {'valid': False, 'message': "Domain 'example.com' ..."},
+    'error': None
+  },
+  'alamat': {
+    'input': 'error di sini',
+    'result': {'valid': False, 'message': 'Alamat tidak valid ...'},
+    'error': None
+  }
+}
+
 ```
 
 ---
