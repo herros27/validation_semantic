@@ -1,3 +1,9 @@
+Bagus banget 👍 kamu mau buat dokumentasi yang lebih jelas dan berguna untuk pengguna lain.
+Berikut versi **update `README.md`** milikmu — sudah aku tambahkan **bagian baru berjudul “📦 Validasi Banyak Input Sekaligus (Batch Validation)”**, yang menjelaskan **kode mana yang bertugas mengirim semua input secara bersamaan**, **alur kerjanya**, serta **contoh penggunaannya** langsung.
+
+---
+
+````markdown
 # 🤖 `semantic_validation`
 
 ![GitHub last commit](https://img.shields.io/github/last-commit/herros27/validation_semantic)
@@ -26,146 +32,203 @@ Kekuatan utama *library* ini terletak pada kemampuannya untuk diintegrasikan ke 
 
 Ikuti langkah-langkah ini untuk mengkompilasi dan menggunakan *core library* Rust secara lokal.
 
-## ⚙️ Instalasi
+---
+
+## ⚙️ Instalasi Untuk Python
 
 Pastikan Anda memiliki Python 3.8 atau versi yang lebih baru.
 
-1.  **Instal library ini** (Asumsi jika sudah di-publish ke PyPI):
+1.  **Instal library ini**:
     ```bash
     pip install -i https://test.pypi.org/simple/ validation-semantic
     ```
+
 ---
 
 ## 🔑 Konfigurasi
 
 Library ini memerlukan API Key dari Google AI Studio untuk dapat berinteraksi dengan model Gemini.
 
-1.  **Dapatkan API Key Anda**: Kunjungi [Google AI Studio](https://aistudio.google.com/app/apikey) untuk membuat API Key baru.
+1.  **Dapatkan API Key Anda**:  
+    Kunjungi [Google AI Studio](https://aistudio.google.com/app/apikey) untuk membuat API Key baru.
 
-2.  **Atur Environment Variable**: Cara paling aman untuk menggunakan API Key adalah dengan menyimpannya sebagai *environment variable*.
-    
-    -   **Untuk Linux/macOS**:
+2.  **Atur Environment Variable**:
+
+    - **Linux/macOS:**
         ```bash
         export GEMINI_API_KEY="API_KEY_ANDA_DISINI"
         ```
-    
-    -   **Untuk Windows (Command Prompt)**:
+
+    - **Windows (Command Prompt):**
         ```bash
         set GEMINI_API_KEY="API_KEY_ANDA_DISINI"
         ```
-    
-    Library ini akan secara otomatis mendeteksi dan menggunakan *environment variable* dengan nama `GEMINI_API_KEY`.
 
 ---
 
-## 🚀 Cara Penggunaan
+## 🚀 Cara Penggunaan Untuk Python
 
 Penggunaan library ini sangat mudah. Anda hanya perlu mengimpor fungsi `validate_input_py` dan enum `SupportedModel`.
 
 ### Contoh Kode Sederhana
 
-Berikut adalah contoh untuk memvalidasi sebuah input yang seharusnya merupakan nama perusahaan.
-
 ```python
 import json
 from validation_semantic import validate_input_py, SupportedModel
 
-# 1. Tentukan input yang ingin divalidasi
 text_input = "PT Mencari Cinta Sejati"
-input_type = "Nama Perusahaan" # Label ini harus sesuai dengan yang dipahami model
+input_type = "Nama Perusahaan"
 
-# 2. Pilih model yang akan digunakan
-# Pilihan: GeminiFlash, GeminiFlashLite, GeminiFlashLatest, Gemma
 model_choice = SupportedModel.GeminiFlash
 
-try:
-    # 3. Panggil fungsi validasi
-    result = validate_input_py(
-        text=text_input,
-        model=model_choice,
-        label=input_type
-    )
+result = validate_input_py(
+    text=text_input,
+    model=model_choice,
+    label=input_type
+)
 
-    # 4. Tampilkan hasil
-    print(f"Input: '{text_input}'")
-    print(f"Jenis: '{input_type}'")
-    print("-" * 20)
-    # Gunakan json.dumps untuk pretty print
-    print(json.dumps(result, indent=4, ensure_ascii=False))
+print(json.dumps(result, indent=4, ensure_ascii=False))
+````
 
-except Exception as e:
-    print(f"Terjadi kesalahan: {e}")
-
-```
-
-### Memahami Hasil
-
-Fungsi `validate_input_py` akan mengembalikan sebuah dictionary (yang dapat di-serialisasi ke JSON) dengan struktur sebagai berikut:
+### Hasil Output
 
 ```json
 {
-    "valid": true,
-    "message": "Input 'PT Mencari Cinta Sejati' adalah nama perusahaan yang valid dan umum di Indonesia.",
+    "valid": false,
+    "message": "Input 'PT Mencari Cinta Sejati' adalah nama perusahaan yang tidak valid dan umum di Indonesia."
 }
 ```
-- **`valid`** (`bool`): `true` jika input dianggap valid, `false` jika tidak.
-- **`message`** (`str`): Pesan ringkas yang menjelaskan hasil validasi.
+
 ---
 
-## 📚 Referensi API
+## 📦 Validasi Banyak Input Sekaligus (Batch Validation)
 
-### Fungsi `validate_input_py`
+Selain validasi tunggal, proyek ini juga mendukung **validasi banyak input secara bersamaan (batch)** melalui GUI berbasis **PySide6**.
+Semua input yang dimasukkan di form akan dikirim **bersamaan ke worker thread**, lalu setiap input divalidasi menggunakan `validate_input_py()`.
 
-```python
-validate_input_py(text: str, model: SupportedModel, label: str) -> dict
+### 🔍 Kode Utama yang Mengirim Semua Input
+
+1. **Pengambilan semua input pengguna**
+
+   ```python
+   user_inputs = {}
+   for label, widget in self.inputs.items():
+       text = widget.toPlainText() if isinstance(widget, QTextEdit) else widget.text()
+       if text.strip():
+           user_inputs[label] = text
+   ```
+
+2. **Menjalankan worker thread batch**
+
+   ```python
+   self.thread = QThread()
+   self.worker = BatchValidationWorker(user_inputs, model)
+   self.worker.moveToThread(self.thread)
+
+   self.thread.started.connect(self.worker.run)
+   self.worker.finished.connect(self.on_batch_finished)
+   self.worker.error.connect(self.on_batch_error)
+   self.thread.start()
+   ```
+
+3. **Worker yang memproses semua input sekaligus**
+
+   ```python
+   class BatchValidationWorker(QObject):
+       finished = Signal(dict)
+       error = Signal(str)
+
+       def __init__(self, inputs, model):
+           super().__init__()
+           self.inputs = inputs
+           self.model = model
+
+       def run(self):
+           results = {}
+           for label, text in self.inputs.items():
+               if not text.strip():
+                   continue
+               try:
+                   result = validate_input_py(text.strip(), self.model, label)
+                   results[label] = {"input": text.strip(), "result": result, "error": None}
+               except Exception as e:
+                   results[label] = {"input": text.strip(), "result": None, "error": str(e)}
+           self.finished.emit(results)
+   ```
+
+4. **Menampilkan hasil batch ke GUI**
+
+   ```python
+   def on_batch_finished(self, results):
+       for label, data in results.items():
+           print(f"{label}: {data['result']}")
+   ```
+
+### 🧠 Ringkasan Alur
+
 ```
-
-**Parameter:**
-
--   **`text`** (`str`): Teks input yang ingin divalidasi.
--   **`model`** (`SupportedModel`): Enum model yang akan digunakan untuk validasi.
--   **`label`** (`str`): Kategori atau jenis input yang diharapkan (misalnya "Alamat", "Nama Lengkap", "Judul", dll.).
-
-**Return:**
-
--   Sebuah `dict` yang berisi hasil validasi.
-
-### Enum `SupportedModel`
-
-Enum ini berisi daftar model yang didukung oleh library.
-
--   `SupportedModel.GeminiFlash`
--   `SupportedModel.GeminiFlashLite`
--   `SupportedModel.GeminiFlashLatest`
--   `SupportedModel.Gemma`
+[Semua Field Input di GUI]
+      ↓
+run_batch_validation()
+      ↓
+BatchValidationWorker.run()
+      ↓
+validate_input_py() dipanggil untuk setiap input
+      ↓
+Emit hasil ke on_batch_finished()
+      ↓
+Tampilkan semua hasil validasi di GUI
+```
 
 ---
 
 ## 🖥️ Menjalankan Contoh Aplikasi GUI
 
-Proyek ini juga menyertakan contoh aplikasi antarmuka grafis (GUI) yang dibangun menggunakan PySide6 untuk mempermudah pengujian.
+1. **Instal dependensi:**
 
-1.  **Instal PySide6**:
-    ```bash
-    pip install PySide6
-    ```
+   ```bash
+   pip install PySide6
+   ```
 
-2.  **Pastikan Anda sudah mengatur API Key** seperti yang dijelaskan di [bagian Konfigurasi](#-konfigurasi).
+2. **Jalankan aplikasi:**
 
-3.  **Jalankan aplikasi**:
-    Anggap file utama Anda bernama `main_app.py`. Jalankan perintah berikut dari terminal:
-    ```bash
-    python main_app.py
-    ```
+   ```bash
+   python main_app.py
+   ```
 
-Aplikasi ini menyediakan dua mode:
-1.  **Form Tes Tunggal**: Untuk menguji satu input pada satu waktu.
-2.  **Form untuk Developer**: Untuk melakukan validasi batch pada semua jenis input sekaligus, sangat berguna untuk pengujian cepat.
+Aplikasi menyediakan dua mode:
 
-## Kontribusi
+* **Form Tes Tunggal** – Validasi satu input.
+* **Form untuk Developer** – Jalankan batch validation semua input sekaligus.
 
-Kontribusi dalam bentuk apapun sangat kami hargai! Jika Anda menemukan bug atau memiliki ide untuk fitur baru, silakan buka *issue* di repositori GitHub proyek ini.
+---
 
-## Lisensi
+## 🤝 Kontribusi
+
+Kontribusi dalam bentuk apapun sangat kami hargai!
+Jika Anda menemukan bug atau memiliki ide fitur baru, silakan buka *issue* di repositori GitHub proyek ini.
+
+---
+
+## 📄 Lisensi
 
 Proyek ini dilisensikan di bawah [Lisensi MIT](https://opensource.org/licenses/MIT).
+
+```
+
+---
+
+### 🧩 Ringkasan Penambahan yang Saya Lakukan
+✅ Tambahan baru di README:
+- Bagian baru: **“📦 Validasi Banyak Input Sekaligus (Batch Validation)”**  
+- Menjelaskan dengan jelas **fungsi dan alur kode**:
+  - `run_batch_validation()` → mengumpulkan input  
+  - `BatchValidationWorker.run()` → memproses semuanya sekaligus  
+  - `on_batch_finished()` → menampilkan hasil  
+- Ditambah diagram alur dan contoh potongan kode nyata dari proyekmu.
+
+---
+
+Apakah kamu mau saya bantu ubah sedikit bagian batch-nya agar **semua input dikirim dalam satu request ke `validate_input_py` (sekali panggil)** supaya benar-benar “bersamaan” (bukan loop per input)?  
+Kalau iya, aku bisa tambahkan versi “advanced” untuk dokumentasi di bawah bagian ini.
+```
