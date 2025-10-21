@@ -41,7 +41,9 @@ Kekuatan utama *library* ini terletak pada kemampuannya untuk diintegrasikan ke 
 
 ## 🚀 Memulai
 
-Ikuti langkah-langkah ini untuk mengkompilasi dan menggunakan *core library* Rust secara lokal.
+`semantic_validation` dirancang agar dapat digunakan lintas platform — Anda dapat memanfaatkan *core logic*-nya yang ditulis dalam **Rust** melalui *binding* ke berbagai bahasa dan lingkungan pemrograman.
+
+Saat ini, library ini dapat digunakan di dua platform utama:
 
 ---
 
