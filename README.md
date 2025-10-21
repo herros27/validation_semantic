@@ -1,5 +1,6 @@
+---
 
-# 🤖 `semantic_validation`
+# 🤖 Library `validation_semantic`
 
 ![GitHub last commit](https://img.shields.io/github/last-commit/herros27/validation_semantic)
 ![GitHub stars](https://img.shields.io/github/stars/herros27/validation_semantic?style=social)
@@ -12,19 +13,25 @@ Kekuatan utama *library* ini terletak pada kemampuannya untuk diintegrasikan ke 
 
 ---
 
----
-
 ## 📑 Daftar Isi
 
-* [🌟 Fitur Utama](#-fitur-utama)
-* [🚀 Memulai](#-memulai)
-* [⚙️ Instalasi Untuk Python](#️-instalasi-untuk-python)
-* [🔑 Konfigurasi](#-konfigurasi)
-* [🚀 Cara Penggunaan Untuk Python](#-cara-penggunaan-untuk-python)
-* [📦 Validasi Banyak Input Sekaligus (Batch Validation)](#-validasi-banyak-input-sekaligus-batch-validation)
-* [🖥️ Menjalankan Contoh Aplikasi GUI](#️-menjalankan-contoh-aplikasi-gui)
-* [🤝 Kontribusi](#-kontribusi)
-* [📄 Lisensi](#-lisensi)
+1. [🌟 Fitur Utama](#-fitur-utama)
+2. [🚀 Memulai](#-memulai)
+3. [⚛️ Menggunakan Library di React (Vite)](#️-menggunakan-library-di-react-vite)
+
+   * [🧩 Instalasi Library dan Plugin Pendukung](#-1️⃣-instalasi-library-dan-plugin-pendukung)
+   * [⚙️ Konfigurasi Vite](#️-2️⃣-konfigurasi-vite)
+   * [🚀 Gunakan Modul WASM di React](#-3️⃣-gunakan-modul-wasm-di-react)
+   * [🧾 Contoh Output](#-4️⃣-contoh-output)
+   * [📘 Ringkasan Fungsi Utama](#-5️⃣-ringkasan-fungsi-utama)
+4. [🐍 Instalasi untuk Python](#-python)
+
+   * [🔑 Konfigurasi API Key](#-konfigurasi)
+   * [🚀 Cara Penggunaan untuk Python](#-cara-penggunaan-untuk-python)
+5. [📦 Validasi Banyak Input Sekaligus (Batch Validation)](#-validasi-banyak-input-sekaligus-batch-validation)
+6. [🖥️ Menjalankan Contoh Aplikasi GUI (Desktop dengan Python)](#️-menjalankan-contoh-aplikasi-gui-dekstop-dengan-python-)
+7. [🤝 Kontribusi](#-kontribusi)
+8. [📄 Lisensi](#-lisensi)
 
 ---
 
@@ -34,8 +41,8 @@ Kekuatan utama *library* ini terletak pada kemampuannya untuk diintegrasikan ke 
 * **Validasi Berbasis Aturan:** Terapkan seperangkat aturan yang dapat dikonfigurasi untuk memeriksa integritas dan konsistensi semantik data Anda.
 * **Deteksi Anomali:** Mudah mengidentifikasi pola atau nilai data yang tidak sesuai dengan ekspektasi semantik Anda.
 * **API yang Fleksibel:** Dirancang untuk mudah diekspos melalui *bindings* ke berbagai bahasa dan lingkungan pemrograman.
-* **Laporan Detail:** Dapatkan laporan validasi yang jelas dan informatif, menunjukkan secara spesifik di mana letak masalah semantik dan mengapa.
-* **Siap untuk *Cross-Platform*:** Dibuat dengan mempertimbangkan penggunaan di lingkungan *server*, *desktop*, dan bahkan *browser*.
+* **Laporan Detail:** Dapatkan laporan validasi yang jelas dan informatif.
+* **Siap untuk *Cross-Platform*:** Digunakan di server, desktop, maupun browser.
 
 ---
 
@@ -45,25 +52,8 @@ Kekuatan utama *library* ini terletak pada kemampuannya untuk diintegrasikan ke 
 
 Saat ini, library ini dapat digunakan di dua platform utama:
 
----
-
-### 🐍 **Python**
-
-Untuk Python, Anda dapat menginstal library ini langsung dari **TestPyPI** menggunakan `pip`.
-
-> Pastikan Anda sudah menginstal **Python 3.8+** dan `pip` terbaru.
-
-```bash
-pip install -i https://test.pypi.org/simple/ validation-semantic
-```
-
-Setelah terinstal, Anda bisa langsung mengimpor dan menggunakan fungsi `validate_input_py` di kode Python Anda:
-
-```python
-from validation_semantic import validate_input_py, SupportedModel
-```
-
----
+* **Frontend:** React (Vite) menggunakan WebAssembly (WASM)
+* **Backend / Desktop:** Python (via PyO3 / Maturin)
 
 ---
 
@@ -75,8 +65,6 @@ Langkah-langkah berikut menjelaskan cara instalasi dan penggunaannya.
 ---
 
 ### 🧩 1️⃣ Instalasi Library dan Plugin Pendukung
-
-Jalankan perintah berikut di terminal proyek React kamu:
 
 ```bash
 # Instal library utama
@@ -92,9 +80,6 @@ npm install vite-plugin-wasm vite-plugin-top-level-await
 
 ### ⚙️ 2️⃣ Konfigurasi Vite
 
-Edit file `vite.config.ts` (atau `vite.config.js`) agar mendukung WebAssembly dan top-level await.
-Gunakan konfigurasi berikut:
-
 ```ts
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
@@ -102,7 +87,6 @@ import tailwindcss from '@tailwindcss/vite'
 import wasm from "vite-plugin-wasm"
 import topLevelAwait from "vite-plugin-top-level-await"
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
@@ -113,14 +97,9 @@ export default defineConfig({
 })
 ```
 
-> `vite-plugin-wasm` memastikan file `.wasm` dapat dimuat dinamis.
-> `vite-plugin-top-level-await` memungkinkan kita memakai `await` di luar fungsi async — berguna untuk inisialisasi modul WASM.
-
 ---
 
 ### 🚀 3️⃣ Gunakan Modul WASM di React
-
-Berikut contoh sederhana pemanggilan fungsi dari modul `validation_semantic`:
 
 ```tsx
 import { useWasm } from "validation_semantic";
@@ -174,34 +153,37 @@ export default function Example() {
 
 ---
 
+## 🐍 **Python**
 
+Untuk Python, Anda dapat menginstal library ini langsung dari **TestPyPI** menggunakan `pip`.
 
-## 🚀 Cara Penggunaan Untuk Python
+```bash
+pip install -i https://test.pypi.org/simple/ validation-semantic
+```
 
-## 🔑 Konfigurasi
+Setelah terinstal, Anda bisa langsung mengimpor dan menggunakan fungsi `validate_input_py` di kode Python Anda:
 
-Library ini memerlukan API Key dari Google AI Studio untuk dapat berinteraksi dengan model Gemini.
-
-1.  **Dapatkan API Key Anda**:  
-    Kunjungi [Google AI Studio](https://aistudio.google.com/app/apikey) untuk membuat API Key baru.
-
-2.  **Atur Environment Variable**:
-
-    - **Linux/macOS:**
-        ```bash
-        export GEMINI_API_KEY="API_KEY_ANDA_DISINI"
-        ```
-
-    - **Windows (Command Prompt):**
-        ```bash
-        set GEMINI_API_KEY="API_KEY_ANDA_DISINI"
-        ```
+```python
+from validation_semantic import validate_input_py, SupportedModel
+```
 
 ---
 
-Penggunaan library ini sangat mudah. Anda hanya perlu mengimpor fungsi `validate_input_py` dan enum `SupportedModel`.
+## 🔑 Konfigurasi
 
-### Contoh Kode Sederhana
+Library ini memerlukan API Key dari Google AI Studio.
+
+```bash
+# Linux/macOS
+export GEMINI_API_KEY="API_KEY_ANDA"
+
+# Windows (Command Prompt)
+set GEMINI_API_KEY="API_KEY_ANDA"
+```
+
+---
+
+## 🚀 Cara Penggunaan Untuk Python
 
 ```python
 import json
@@ -219,9 +201,9 @@ result = validate_input_py(
 )
 
 print(json.dumps(result, indent=4, ensure_ascii=False))
+```
 
-
-### Hasil Output
+**Output:**
 
 ```json
 {
@@ -234,114 +216,35 @@ print(json.dumps(result, indent=4, ensure_ascii=False))
 
 ## 📦 Validasi Banyak Input Sekaligus (Batch Validation)
 
-Selain validasi tunggal, proyek ini juga mendukung **validasi banyak input secara bersamaan (batch)** melalui GUI berbasis **PySide6**.
-Semua input yang dimasukkan di form akan dikirim **bersamaan ke worker thread**, lalu setiap input divalidasi menggunakan `validate_input_py()`.
+Contoh penggunaan batch validation melalui GUI berbasis **PySide6**.
 
-### 🔍 Kode Utama yang Mengirim Semua Input
-
-1. **Pengambilan semua input pengguna**
-
-   ```python
-   user_inputs = {}
-   for label, widget in self.inputs.items():
-       text = widget.toPlainText() if isinstance(widget, QTextEdit) else widget.text()
-       if text.strip():
-           user_inputs[label] = text
-   ```
-
-2. **Menjalankan worker thread batch**
-
-   ```python
-   self.thread = QThread()
-   self.worker = BatchValidationWorker(user_inputs, model)
-   self.worker.moveToThread(self.thread)
-
-   self.thread.started.connect(self.worker.run)
-   self.worker.finished.connect(self.on_batch_finished)
-   self.worker.error.connect(self.on_batch_error)
-   self.thread.start()
-   ```
-
-3. **Worker yang memproses semua input sekaligus**
-
-   ```python
-   class BatchValidationWorker(QObject):
-       finished = Signal(dict)
-       error = Signal(str)
-
-       def __init__(self, inputs, model):
-           super().__init__()
-           self.inputs = inputs
-           self.model = model
-
-       def run(self):
-           results = {}
-           for label, text in self.inputs.items():
-               if not text.strip():
-                   continue
-               try:
-                   result = validate_input_py(text.strip(), self.model, label)
-                   results[label] = {"input": text.strip(), "result": result, "error": None}
-               except Exception as e:
-                   results[label] = {"input": text.strip(), "result": None, "error": str(e)}
-           self.finished.emit(results)
-   ```
-
-4. **Menampilkan hasil batch ke GUI**
-
-   ```python
-   def on_batch_finished(self, results):
-       for label, data in results.items():
-           print(f"{label}: {data['result']}")
-   ```
-
-### 🧠 Ringkasan Alur
-
+```python
+self.worker = BatchValidationWorker(user_inputs, model)
+self.thread.started.connect(self.worker.run)
 ```
-[Semua Field Input di GUI]
-      ↓
-run_batch_validation()
-      ↓
-BatchValidationWorker.run()
-      ↓
-validate_input_py() dipanggil untuk setiap input
-      ↓
-Emit hasil ke on_batch_finished()
-      ↓
-Tampilkan semua hasil validasi di GUI
-```
+
+Semua hasil dikirim kembali ke GUI melalui sinyal `finished`.
 
 ---
 
-## 🖥️ Menjalankan Contoh Aplikasi GUI
+## 🖥️ Menjalankan Contoh Aplikasi GUI (Dekstop dengan Python)
 
-1. **Instal dependensi:**
-
-   ```bash
-   pip install PySide6
-   ```
-
-2. **Jalankan aplikasi:**
-
-   ```bash
-   python main_app.py
-   ```
-
-Aplikasi menyediakan dua mode:
-
-* **Form Tes Tunggal** – Validasi satu input.
-* **Form untuk Developer** – Jalankan batch validation semua input sekaligus.
+```bash
+pip install PySide6
+python main_app.py
+```
 
 ---
 
 ## 🤝 Kontribusi
 
-Kontribusi dalam bentuk apapun sangat kami hargai!
-Jika Anda menemukan bug atau memiliki ide fitur baru, silakan buka *issue* di repositori GitHub proyek ini.
+Kontribusi sangat diterima!
+Silakan buat *issue* atau *pull request* di [GitHub Repository](https://github.com/herros27/validation_semantic).
 
 ---
 
 ## 📄 Lisensi
 
-Proyek ini dilisensikan di bawah [Lisensi MIT](https://opensource.org/licenses/MIT).
+Proyek ini dilisensikan di bawah [MIT License](https://opensource.org/licenses/MIT).
 
+---
