@@ -308,21 +308,30 @@ if __name__ == "__main__":
 
 ```json
 {
-  'nama': {
-    'input': 'John Doe',
-    'result': {'valid': True, 'message': 'Nama valid.'},
-    'error': None
-  },
-  'email': {
-    'input': 'john@example.com',
-    'result': {'valid': False, 'message': "Domain 'example.com' ..."},
-    'error': None
-  },
-  'alamat': {
-    'input': 'error di sini',
-    'result': {'valid': False, 'message': 'Alamat tidak valid ...'},
-    'error': None
-  }
+    "nama": {
+        "input": "John Doe",
+        "result": {
+            "valid": true,
+            "message": "Nama valid."
+        },
+        "error": null
+    },
+    "email": {
+        "input": "john@example.com",
+        "result": {
+            "valid": false,
+            "message": "Alamat email menggunakan domain 'example.com' yang merupakan domain contoh dan tidak valid untuk penggunaan nyata. Silakan gunakan domain yang valid dan profesional."
+        },
+        "error": null
+    },
+    "alamat": {
+        "input": "error di sini",
+        "result": {
+            "valid": false,
+            "message": "Alamat tidak valid karena mengandung kata-kata yang tidak membentuk struktur alamat fisik yang realistis."
+        },
+        "error": null
+    }
 }
 
 ```
