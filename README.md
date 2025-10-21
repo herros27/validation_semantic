@@ -43,7 +43,7 @@ Dengan kombinasi **kecepatan Rust** dan **kecerdasan Gemini**, `validation_seman
    * [🚀 Cara Penggunaan untuk Python](#-cara-penggunaan-untuk-python)
 5. [📦 Validasi Banyak Input Sekaligus (Batch Validation)](#-validasi-banyak-input-sekaligus-batch-validation)
 6. [🖥️ Menjalankan Contoh Aplikasi GUI (Desktop dengan Python)](#️-menjalankan-contoh-aplikasi-gui-dekstop-dengan-python-)
-7. [🧩 Jenis Input yang Dapat Divalidasi)](#️-jenis-input-yang-dapat-divalidasi-)
+7. [🧩 Jenis Input yang Dapat Divalidasi](#️-jenis-input-yang-dapat-divalidasi-)
 8. [🤝 Kontribusi](#-kontribusi)
 9. [📄 Lisensi](#-lisensi)
 
