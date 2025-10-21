@@ -1,15 +1,28 @@
 ---
 
-# 🤖 Library `validation_semantic`
+# 🤖 Library `validation_semantic` Dengan Gemini API
 
 ![GitHub last commit](https://img.shields.io/github/last-commit/herros27/validation_semantic)
 ![GitHub stars](https://img.shields.io/github/stars/herros27/validation_semantic?style=social)
 ![TestPyPI](https://img.shields.io/badge/TestPyPI-validation--semantic-blue?logo=pypi)
 ![Rust Build Status](https://github.com/herros27/validation_semantic/actions/workflows/release.yml/badge.svg)
 
-`semantic_validation` adalah *library* **validasi semantik** yang tangguh dan berkinerja tinggi, ditulis sepenuhnya dalam **Rust**. Fokus utamanya adalah menyediakan **core logic** yang andal untuk memastikan data Anda tidak hanya valid secara format, tetapi juga **bermakna dan konsisten** sesuai dengan aturan bisnis yang Anda tetapkan.
+`validation_semantic` adalah *library* **validasi semantik** yang cepat, aman, dan cerdas — dibangun sepenuhnya dengan **Rust** dan didukung oleh **model Gemini dari Google AI Studio**.
 
-Kekuatan utama *library* ini terletak pada kemampuannya untuk diintegrasikan ke berbagai *platform* melalui **bindings**. Ini berarti Anda bisa memanfaatkan kecepatan dan keamanan Rust di lingkungan seperti **WebAssembly (WASM)** untuk *browser*, **Python (menggunakan PyO3/Maturin)** untuk *backend* atau *data science*, dan *platform* lainnya di masa mendatang.
+Library ini tidak hanya memeriksa validitas data secara **sintaksis** (misalnya format email atau nomor telepon), tetapi juga melakukan **analisis semantik** untuk memahami *makna dan konteks* dari input pengguna. Dengan integrasi **Gemini API**, proses validasi menjadi lebih kontekstual dan adaptif terhadap berbagai jenis data maupun bahasa.
+
+Berbeda dari validator konvensional, `validation_semantic` berfokus pada **pemahaman arti dan tujuan data**, bukan sekadar pola teks.
+Sebagai contoh, library ini dapat membedakan apakah sebuah input lebih sesuai dikategorikan sebagai nama institusi, alamat email, deskripsi, atau teks naratif — menghasilkan validasi yang jauh lebih presisi dan bermakna.
+
+### 🌍 Dukungan Multiplatform
+
+Kelebihan utama `validation_semantic` terletak pada desain modular dan interoperabilitas lintas platform melalui **bindings**:
+
+* 🧩 **WebAssembly (WASM)** — memungkinkan integrasi di *frontend* seperti React atau Vue dengan performa tinggi langsung di browser.
+* 🐍 **Python (via PyO3 / Maturin)** — ideal untuk *backend services*, *data validation pipelines*, atau *machine learning preprocessing*.
+* 🔧 Dukungan untuk *binding* lain seperti Node.js dan Go sedang dalam tahap pengembangan.
+
+Dengan kombinasi **kecepatan Rust** dan **kecerdasan Gemini**, `validation_semantic` menghadirkan sistem validasi modern yang **kontekstual, efisien, dan mudah diintegrasikan** ke berbagai proyek.
 
 ---
 
