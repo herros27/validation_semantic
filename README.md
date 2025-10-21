@@ -20,7 +20,7 @@ Kelebihan utama `validation_semantic` terletak pada desain modular dan interoper
 
 * 🧩 **WebAssembly (WASM)** — memungkinkan integrasi di *frontend* seperti React atau Vue dengan performa tinggi langsung di browser.
 * 🐍 **Python (via PyO3 / Maturin)** — ideal untuk *backend services*, *data validation pipelines*, atau *machine learning preprocessing*.
-* 🔧 Dukungan untuk *binding* lain seperti Node.js dan Go sedang dalam tahap pengembangan.
+* 🔧 Dukungan untuk *binding* lain seperti Kotlin sedang dalam tahap pengembangan.
 
 Dengan kombinasi **kecepatan Rust** dan **kecerdasan Gemini**, `validation_semantic` menghadirkan sistem validasi modern yang **kontekstual, efisien, dan mudah diintegrasikan** ke berbagai proyek.
 
