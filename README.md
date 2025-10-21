@@ -342,21 +342,7 @@ if __name__ == "__main__":
 
 ```
 
----
-
-Contoh penggunaan batch validation melalui GUI berbasis **PySide6**.
-
-```python
-self.worker = BatchValidationWorker(user_inputs, model)
-self.thread.started.connect(self.worker.run)
-```
-
-Semua hasil dikirim kembali ke GUI melalui sinyal `finished`.
-
----
-
-
-## 🧩 Jenis Input yang Dapat Divalidasi
+## 🧩 Jenis Input yang Dapat Divalidasi  
 
 Library `validation_semantic` mendukung berbagai jenis input teks yang umum digunakan dalam aplikasi bisnis, akademik, maupun personal.
 Berikut daftar lengkap jenis input yang dapat divalidasi beserta **fungsi atau konteks penggunaannya**:
