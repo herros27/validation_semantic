@@ -293,23 +293,6 @@ if __name__ == "__main__":
           
         print()
 ```
-
-### Hasil Output:
-
-```
-[nama]
- Input: John Doe
- ✅ Valid: Nama valid.
-
-[email]
- Input: john@example.com
- ⚠️  Invalid: Domain 'example.com' adalah domain contoh dan tidak valid untuk penggunaan nyata. Silakan gunakan domain yang  valid dan profesional.
-
-[alamat]
- Input: error di sini
- ⚠️  Invalid: Alamat tidak valid karena mengandung kata-kata yang tidak membentuk struktur alamat fisik yang realistis.     
-
-```
 ### JSON Output:
 
 ```json
@@ -339,6 +322,23 @@ if __name__ == "__main__":
         "error": null
     }
 }
+
+```
+
+### Hasil Output:
+
+```
+[nama]
+ Input: John Doe
+ ✅ Valid: Nama valid.
+
+[email]
+ Input: john@example.com
+ ⚠️  Invalid: Domain 'example.com' adalah domain contoh dan tidak valid untuk penggunaan nyata. Silakan gunakan domain yang  valid dan profesional.
+
+[alamat]
+ Input: error di sini
+ ⚠️  Invalid: Alamat tidak valid karena mengandung kata-kata yang tidak membentuk struktur alamat fisik yang realistis.     
 
 ```
 
