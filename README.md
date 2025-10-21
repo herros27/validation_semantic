@@ -12,6 +12,22 @@ Kekuatan utama *library* ini terletak pada kemampuannya untuk diintegrasikan ke 
 
 ---
 
+---
+
+## 📑 Daftar Isi
+
+* [🌟 Fitur Utama](#-fitur-utama)
+* [🚀 Memulai](#-memulai)
+* [⚙️ Instalasi Untuk Python](#️-instalasi-untuk-python)
+* [🔑 Konfigurasi](#-konfigurasi)
+* [🚀 Cara Penggunaan Untuk Python](#-cara-penggunaan-untuk-python)
+* [📦 Validasi Banyak Input Sekaligus (Batch Validation)](#-validasi-banyak-input-sekaligus-batch-validation)
+* [🖥️ Menjalankan Contoh Aplikasi GUI](#️-menjalankan-contoh-aplikasi-gui)
+* [🤝 Kontribusi](#-kontribusi)
+* [📄 Lisensi](#-lisensi)
+
+---
+
 ## 🌟 Fitur Utama
 
 * **Core Logic dalam Rust:** Mesin validasi semantik yang cepat, aman, dan efisien, dibangun di atas fondasi Rust.
