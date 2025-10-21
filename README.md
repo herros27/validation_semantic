@@ -3,7 +3,7 @@
 
 ![GitHub last commit](https://img.shields.io/github/last-commit/herros27/validation_semantic)
 ![GitHub stars](https://img.shields.io/github/stars/herros27/validation_semantic?style=social)
-![Crates.io](https://img.shields.io/crates/v/semantic_validation)
+![TestPyPI](https://img.shields.io/badge/TestPyPI-validation--semantic-blue?logo=pypi)
 ![Rust Build Status](https://github.com/herros27/validation_semantic/actions/workflows/release.yml/badge.svg)
 
 `semantic_validation` adalah *library* **validasi semantik** yang tangguh dan berkinerja tinggi, ditulis sepenuhnya dalam **Rust**. Fokus utamanya adalah menyediakan **core logic** yang andal untuk memastikan data Anda tidak hanya valid secara format, tetapi juga **bermakna dan konsisten** sesuai dengan aturan bisnis yang Anda tetapkan.
