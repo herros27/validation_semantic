@@ -196,27 +196,27 @@ export default function BatchValidationExample() {
 
     // Kumpulan input yang akan divalidasi
     const inputs: Record<InputType, string> = {
-      email: "john@example.com",
+      "email": "john@example.com",
       "nama lengkap": "John Doe",
-      alamat: "Jl. Mawar No. 123",
+      "alamat": "Jl. Mawar No. 123",
       "nama produk": "Error produk",
       // input lain bisa ditambahkan di sini
     };
 
     // Jalankan semua validasi secara paralel
     const validationPromises = Object.entries(inputs).map(
-      async ([type, value]) => {
+      async ([inputType, inputValue]) => {
         try {
           const result = await wasmModule.validateTextJs(
-            value,
+            inputValue,
             modelSelectorInt,
-            type as InputType
+            inputType as InputType
           );
-          return { type, input: value, result, error: null };
+          return { inputType, inputValue, result, error: null };
         } catch (err: any) {
           return {
-            type,
-            input: value,
+            inputType,
+            inputValue,
             result: null,
             error: err?.message ?? "Terjadi kesalahan saat validasi.",
           };
@@ -227,7 +227,10 @@ export default function BatchValidationExample() {
     // Tunggu semua selesai dan susun hasilnya
     const results = await Promise.all(validationPromises);
     const batchResults = Object.fromEntries(
-      results.map((r) => [r.type, { input: r.input, result: r.result, error: r.error }])
+      results.map((r) => [
+        r.inputType,
+        { input: r.inputValue, result: r.result, error: r.error },
+      ])
     );
 
     console.log("Hasil Validasi Batch:", batchResults);
@@ -236,6 +239,7 @@ export default function BatchValidationExample() {
   // Jalankan validasi batch (contoh pemanggilan)
   if (!wasmError) validateBatchInputs();
 }
+
 ```
 
 ---
