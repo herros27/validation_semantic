@@ -41,7 +41,7 @@ Dengan kombinasi **kecepatan Rust** dan **kecerdasan Gemini**, `validation_seman
 
    * [🔑 Konfigurasi API Key](#-konfigurasi)
    * [🚀 Cara Penggunaan untuk Python](#-cara-penggunaan-untuk-python)
-   * [📦 Validasi Banyak Input Sekaligus (Batch Validation)](#-validasi-banyak-input-sekaligus-batch-validation)
+   * [📦 Validasi Banyak Input Sekaligus (Batch Validation)](#-validasi-banyak-input-sekaligus-batch-validation-dengan-python)
 5. [🧩 Jenis Input yang Dapat Divalidasi](#️-jenis-input-yang-dapat-divalidasi)
 6. [🤝 Kontribusi](#-kontribusi)
 7. [📄 Lisensi](#-lisensi)
@@ -228,20 +228,7 @@ print(json.dumps(result, indent=4, ensure_ascii=False))
 ---
 
 
-## 📦 Validasi Banyak Input Sekaligus (Batch Validation)
-
-Contoh penggunaan batch validation melalui GUI berbasis **PySide6**.
-
-```python
-self.worker = BatchValidationWorker(user_inputs, model)
-self.thread.started.connect(self.worker.run)
-```
-
-Semua hasil dikirim kembali ke GUI melalui sinyal `finished`.
-
----
-
-## ⚙️ Versi Python Biasa (Tanpa PySide6)
+## 📦 Validasi Banyak Input Sekaligus (Batch Validation) dengan python
 
 Jika kamu tidak menggunakan GUI (misalnya untuk CLI, backend, atau testing), kamu bisa membuat versi `BatchValidationWorker` tanpa `QObject` dan `Signal`.
 
