@@ -272,20 +272,25 @@ if __name__ == "__main__":
         "email": "john@example.com",
         "alamat": "error di sini"
     }
-    model = SupportedModel.GeminiFlash
+    model = SupportedModel.GeminiFlashLite
     worker = BatchValidationWorker(user_inputs, model)
     results = worker.run()
+
+    print(results)
     json_output = json.dumps(results, indent=4, ensure_ascii=False)
     print("\n=== Hasil Validasi Batch ===")
     print(json_output)
-
     for label, info in results.items():
         print(f"[{label}]")
         print(" Input:", info["input"])
         if info["error"]:
             print(" ❌ Error:", info["error"])
         else:
-            print(" ✅ Result:", info["result"])
+            if info["result"]["valid"] == True:
+                print(" ✅ Valid:", info["result"]["message"])
+            else:
+                print(" ⚠️  Invalid:", info["result"]["message"])
+          
         print()
 ```
 
@@ -294,15 +299,16 @@ if __name__ == "__main__":
 ```
 [nama]
  Input: John Doe
- ✅ Result: Validasi sukses untuk 'nama' menggunakan model Gemini 1.5 Pro
+ ✅ Valid: Nama valid.
 
 [email]
  Input: john@example.com
- ✅ Result: Validasi sukses untuk 'email' menggunakan model Gemini 1.5 Pro
+ ⚠️  Invalid: Domain 'example.com' adalah domain contoh dan tidak valid untuk penggunaan nyata. Silakan gunakan domain yang  valid dan profesional.
 
 [alamat]
  Input: error di sini
- ❌ Error: Input 'alamat' mengandung kata 'error'
+ ⚠️  Invalid: Alamat tidak valid karena mengandung kata-kata yang tidak membentuk struktur alamat fisik yang realistis.     
+
 ```
 ### JSON Output:
 
