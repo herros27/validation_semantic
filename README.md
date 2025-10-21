@@ -145,7 +145,7 @@ export default function Example() {
 
 ---
 
-### 🧾 4️⃣ Contoh Output
+### 📋 Hasil Contoh Output (di Console)
 
 ```json
 {
@@ -153,6 +153,133 @@ export default function Example() {
   "message": "Input 'PT Sinar Mentari' adalah nama perusahaan yang valid dan umum di Indonesia."
 }
 ```
+
+---
+
+### 🧠 5️⃣ Contoh Validasi Banyak Input Sekaligus (Batch Validation)
+
+Kamu dapat melakukan **validasi beberapa input sekaligus** menggunakan `validateTextJs` dari modul WASM.
+Setiap input diproses secara **asynchronous dan paralel** untuk efisiensi.
+
+```tsx
+import { useWasm } from "validation_semantic";
+
+type InputType =
+  | "email"
+  | "nama institusi"
+  | "nama perusahaan"
+  | "nama produk"
+  | "nama lokasi"
+  | "nama lengkap"
+  | "judul"
+  | "pekerjaan"
+  | "tag"
+  | "alamat"
+  | "text area";
+
+export default function BatchValidationExample() {
+  const { wasmReady, wasmModule, error: wasmError } = useWasm();
+  const modelToUseKey = "GEMINI_2_5_FLASH";
+
+  async function validateBatchInputs() {
+    if (!wasmReady || !wasmModule) {
+      console.error("Modul WASM belum siap.");
+      return;
+    }
+
+    const supportedModels = wasmModule.getSupportedModelSelectors();
+    const modelSelectorInt = supportedModels[modelToUseKey];
+
+    if (typeof modelSelectorInt === "undefined") {
+      throw new Error(`Model ${modelToUseKey} tidak ditemukan.`);
+    }
+
+    // Kumpulan input yang akan divalidasi
+    const inputs: Record<InputType, string> = {
+      email: "john@example.com",
+      "nama lengkap": "John Doe",
+      alamat: "Jl. Mawar No. 123",
+      "nama produk": "Error produk",
+      // input lain bisa ditambahkan di sini
+    };
+
+    // Jalankan semua validasi secara paralel
+    const validationPromises = Object.entries(inputs).map(
+      async ([type, value]) => {
+        try {
+          const result = await wasmModule.validateTextJs(
+            value,
+            modelSelectorInt,
+            type as InputType
+          );
+          return { type, input: value, result, error: null };
+        } catch (err: any) {
+          return {
+            type,
+            input: value,
+            result: null,
+            error: err?.message ?? "Terjadi kesalahan saat validasi.",
+          };
+        }
+      }
+    );
+
+    // Tunggu semua selesai dan susun hasilnya
+    const results = await Promise.all(validationPromises);
+    const batchResults = Object.fromEntries(
+      results.map((r) => [r.type, { input: r.input, result: r.result, error: r.error }])
+    );
+
+    console.log("Hasil Validasi Batch:", batchResults);
+  }
+
+  // Jalankan validasi batch (contoh pemanggilan)
+  if (!wasmError) validateBatchInputs();
+}
+```
+
+---
+
+### 📋 Hasil Contoh Output (di Console)
+
+```json
+{
+  "email": {
+    "input": "john@example.com",
+    "result": {
+      "valid": false,
+      "message": "Domain 'example.com' adalah domain contoh dan tidak valid untuk penggunaan nyata."
+    },
+    "error": null
+  },
+  "nama lengkap": {
+    "input": "John Doe",
+    "result": {
+      "valid": true,
+      "message": "Nama valid."
+    },
+    "error": null
+  },
+  "alamat": {
+    "input": "Jl. Mawar No. 123",
+    "result": {
+      "valid": true,
+      "message": "Alamat valid."
+    },
+    "error": null
+  }
+}
+```
+
+---
+
+### 💡 Catatan
+
+* Fungsi `validateTextJs()` tetap digunakan seperti pada validasi tunggal.
+* Perbedaan utamanya adalah semua input dikirim **sekaligus** menggunakan `Promise.all()` agar berjalan paralel.
+* Kamu bisa menyesuaikan daftar input sesuai kebutuhan form atau dataset kamu.
+
+---
 
 ---
 
