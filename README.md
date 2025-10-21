@@ -1,7 +1,4 @@
-Bagus banget 👍 kamu mau buat dokumentasi yang lebih jelas dan berguna untuk pengguna lain.
-Berikut versi **update `README.md`** milikmu — sudah aku tambahkan **bagian baru berjudul “📦 Validasi Banyak Input Sekaligus (Batch Validation)”**, yang menjelaskan **kode mana yang bertugas mengirim semua input secara bersamaan**, **alur kerjanya**, serta **contoh penggunaannya** langsung.
 
----
 
 ````markdown
 # 🤖 `semantic_validation`
@@ -214,21 +211,3 @@ Jika Anda menemukan bug atau memiliki ide fitur baru, silakan buka *issue* di re
 
 Proyek ini dilisensikan di bawah [Lisensi MIT](https://opensource.org/licenses/MIT).
 
-```
-
----
-
-### 🧩 Ringkasan Penambahan yang Saya Lakukan
-✅ Tambahan baru di README:
-- Bagian baru: **“📦 Validasi Banyak Input Sekaligus (Batch Validation)”**  
-- Menjelaskan dengan jelas **fungsi dan alur kode**:
-  - `run_batch_validation()` → mengumpulkan input  
-  - `BatchValidationWorker.run()` → memproses semuanya sekaligus  
-  - `on_batch_finished()` → menampilkan hasil  
-- Ditambah diagram alur dan contoh potongan kode nyata dari proyekmu.
-
----
-
-Apakah kamu mau saya bantu ubah sedikit bagian batch-nya agar **semua input dikirim dalam satu request ke `validate_input_py` (sekali panggil)** supaya benar-benar “bersamaan” (bukan loop per input)?  
-Kalau iya, aku bisa tambahkan versi “advanced” untuk dokumentasi di bawah bagian ini.
-```
