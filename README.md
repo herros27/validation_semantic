@@ -41,11 +41,10 @@ Dengan kombinasi **kecepatan Rust** dan **kecerdasan Gemini**, `validation_seman
 
    * [🔑 Konfigurasi API Key](#-konfigurasi)
    * [🚀 Cara Penggunaan untuk Python](#-cara-penggunaan-untuk-python)
-5. [📦 Validasi Banyak Input Sekaligus (Batch Validation)](#-validasi-banyak-input-sekaligus-batch-validation)
-6. [🖥️ Menjalankan Contoh Aplikasi GUI (Desktop dengan Python)](#️-menjalankan-contoh-aplikasi-gui-dekstop-dengan-python)
-7. [🧩 Jenis Input yang Dapat Divalidasi](#️-jenis-input-yang-dapat-divalidasi)
-8. [🤝 Kontribusi](#-kontribusi)
-9. [📄 Lisensi](#-lisensi)
+   * [📦 Validasi Banyak Input Sekaligus (Batch Validation)](#-validasi-banyak-input-sekaligus-batch-validation)
+5. [🧩 Jenis Input yang Dapat Divalidasi](#️-jenis-input-yang-dapat-divalidasi)
+6. [🤝 Kontribusi](#-kontribusi)
+7. [📄 Lisensi](#-lisensi)
 
 ---
 
@@ -330,14 +329,6 @@ Semua hasil dikirim kembali ke GUI melalui sinyal `finished`.
 
 ---
 
-## 🖥️ Menjalankan Contoh Aplikasi GUI (Dekstop dengan Python)
-
-```bash
-pip install PySide6
-python main_app.py
-```
-
----
 
 ## 🧩 Jenis Input yang Dapat Divalidasi
 
