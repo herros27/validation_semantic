@@ -228,8 +228,6 @@ print(json.dumps(result, indent=4, ensure_ascii=False))
 
 ---
 
-## 📦 Validasi Banyak Input Sekaligus (Batch Validation)
----
 
 ## 📦 Validasi Banyak Input Sekaligus (Batch Validation)
 
