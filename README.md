@@ -229,6 +229,97 @@ print(json.dumps(result, indent=4, ensure_ascii=False))
 ---
 
 ## 📦 Validasi Banyak Input Sekaligus (Batch Validation)
+---
+
+## 📦 Validasi Banyak Input Sekaligus (Batch Validation)
+
+Contoh penggunaan batch validation melalui GUI berbasis **PySide6**.
+
+```python
+self.worker = BatchValidationWorker(user_inputs, model)
+self.thread.started.connect(self.worker.run)
+```
+
+Semua hasil dikirim kembali ke GUI melalui sinyal `finished`.
+
+---
+
+## ⚙️ Versi Python Biasa (Tanpa PySide6)
+
+Jika kamu tidak menggunakan GUI (misalnya untuk CLI, backend, atau testing), kamu bisa membuat versi `BatchValidationWorker` tanpa `QObject` dan `Signal`.
+
+### Kode Lengkap:
+
+```python
+class BatchValidationWorker:
+    def __init__(self, inputs, model):
+        self.inputs = inputs
+        self.model = model
+
+    def run(self):
+        results = {}
+        for label, text in self.inputs.items():
+            if not text.strip():
+                continue  # lewati input kosong
+
+            try:
+                # Panggil fungsi validasi (pastikan sudah didefinisikan)
+                result = validate_input_py(text.strip(), self.model, label)
+                results[label] = {
+                    "input": text.strip(),
+                    "result": result,
+                    "error": None
+                }
+            except Exception as e:
+                results[label] = {
+                    "input": text.strip(),
+                    "result": None,
+                    "error": str(e)
+                }
+        return results
+```
+
+### Contoh Penggunaan:
+
+```python
+
+if __name__ == "__main__":
+    user_inputs = {
+        "nama": "John Doe",
+        "email": "john@example.com",
+        "alamat": "error di sini"
+    }
+    model = SupportedModel.GeminiFlash
+    worker = BatchValidationWorker(user_inputs, model)
+    results = worker.run()
+
+    for label, info in results.items():
+        print(f"[{label}]")
+        print(" Input:", info["input"])
+        if info["error"]:
+            print(" ❌ Error:", info["error"])
+        else:
+            print(" ✅ Result:", info["result"])
+        print()
+```
+
+### Hasil Output:
+
+```
+[nama]
+ Input: John Doe
+ ✅ Result: Validasi sukses untuk 'nama' menggunakan model Gemini 1.5 Pro
+
+[email]
+ Input: john@example.com
+ ✅ Result: Validasi sukses untuk 'email' menggunakan model Gemini 1.5 Pro
+
+[alamat]
+ Input: error di sini
+ ❌ Error: Input 'alamat' mengandung kata 'error'
+```
+
+---
 
 Contoh penggunaan batch validation melalui GUI berbasis **PySide6**.
 
