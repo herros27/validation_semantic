@@ -246,8 +246,8 @@ class BatchValidationWorker:
                 continue  # lewati input kosong
 
             try:
-                # Panggil fungsi validasi (pastikan sudah didefinisikan)
-                result = validate_input_py(text.strip(), self.model, label)
+                
+                result = validate_input_py(text.strip(), self.model, label) #validate_input_py merupakan fungsi dari library
                 results[label] = {
                     "input": text.strip(),
                     "result": result,
