@@ -47,16 +47,136 @@ Saat ini, library ini dapat digunakan di dua platform utama:
 
 ---
 
-## ⚙️ Instalasi Untuk Python
+### 🐍 **Python**
 
-Pastikan Anda memiliki Python 3.8 atau versi yang lebih baru.
+Untuk Python, Anda dapat menginstal library ini langsung dari **TestPyPI** menggunakan `pip`.
 
-1.  **Instal library ini**:
-    ```bash
-    pip install -i https://test.pypi.org/simple/ validation-semantic
-    ```
+> Pastikan Anda sudah menginstal **Python 3.8+** dan `pip` terbaru.
+
+```bash
+pip install -i https://test.pypi.org/simple/ validation-semantic
+```
+
+Setelah terinstal, Anda bisa langsung mengimpor dan menggunakan fungsi `validate_input_py` di kode Python Anda:
+
+```python
+from validation_semantic import validate_input_py, SupportedModel
+```
 
 ---
+
+---
+
+## ⚛️ Menggunakan Library di React (Vite)
+
+Library ini dapat digunakan di **React (Vite)** dengan memanfaatkan **WebAssembly (WASM)** yang dibangun menggunakan Rust.
+Langkah-langkah berikut menjelaskan cara instalasi dan penggunaannya.
+
+---
+
+### 🧩 1️⃣ Instalasi Library dan Plugin Pendukung
+
+Jalankan perintah berikut di terminal proyek React kamu:
+
+```bash
+# Instal library utama
+npm install validation_semantic
+
+# Instal plugin WASM untuk Vite
+npm install vite-plugin-wasm vite-plugin-top-level-await
+```
+
+> Plugin ini diperlukan agar Vite bisa memuat file `.wasm` dengan benar dan mendukung penggunaan `await` di level atas module.
+
+---
+
+### ⚙️ 2️⃣ Konfigurasi Vite
+
+Edit file `vite.config.ts` (atau `vite.config.js`) agar mendukung WebAssembly dan top-level await.
+Gunakan konfigurasi berikut:
+
+```ts
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+import wasm from "vite-plugin-wasm"
+import topLevelAwait from "vite-plugin-top-level-await"
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [
+    react(),
+    wasm(),                 // Aktifkan dukungan untuk WebAssembly
+    topLevelAwait(),        // Izinkan penggunaan "await" di top-level
+    tailwindcss(),
+  ],
+})
+```
+
+> `vite-plugin-wasm` memastikan file `.wasm` dapat dimuat dinamis.
+> `vite-plugin-top-level-await` memungkinkan kita memakai `await` di luar fungsi async — berguna untuk inisialisasi modul WASM.
+
+---
+
+### 🚀 3️⃣ Gunakan Modul WASM di React
+
+Berikut contoh sederhana pemanggilan fungsi dari modul `validation_semantic`:
+
+```tsx
+import { useWasm } from "validation_semantic";
+
+export default function Example() {
+  const { wasmReady, wasmModule, error } = useWasm();
+
+  async function runValidation() {
+    if (!wasmReady || !wasmModule) {
+      console.warn("WASM belum siap");
+      return;
+    }
+
+    const models = wasmModule.getSupportedModelSelectors();
+    const model = models["GEMINI_2_5_FLASH"];
+
+    const result = await wasmModule.validateTextJs(
+      "PT Sinar Mentari",
+      model,
+      "Nama Perusahaan"
+    );
+
+    console.log(result);
+  }
+
+  if (error) console.error(error);
+  else runValidation();
+}
+```
+
+---
+
+### 🧾 4️⃣ Contoh Output
+
+```json
+{
+  "valid": false,
+  "message": "Input 'PT Sinar Mentari' adalah nama perusahaan yang tidak valid dan umum di Indonesia."
+}
+```
+
+---
+
+### 📘 5️⃣ Ringkasan Fungsi Utama
+
+| Fungsi                                    | Deskripsi                                            |
+| ----------------------------------------- | ---------------------------------------------------- |
+| `useWasm()`                               | *Hook* untuk memuat dan menginisialisasi modul WASM. |
+| `wasmModule.getSupportedModelSelectors()` | Mengambil daftar model yang tersedia.                |
+| `validateTextJs(text, model, type)`       | Melakukan validasi semantik teks.                    |
+
+---
+
+
+
+## 🚀 Cara Penggunaan Untuk Python
 
 ## 🔑 Konfigurasi
 
@@ -78,8 +198,6 @@ Library ini memerlukan API Key dari Google AI Studio untuk dapat berinteraksi de
         ```
 
 ---
-
-## 🚀 Cara Penggunaan Untuk Python
 
 Penggunaan library ini sangat mudah. Anda hanya perlu mengimpor fungsi `validate_input_py` dan enum `SupportedModel`.
 
