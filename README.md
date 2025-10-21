@@ -157,8 +157,8 @@ export default function Example() {
 
 ```json
 {
-  "valid": false,
-  "message": "Input 'PT Sinar Mentari' adalah nama perusahaan yang tidak valid dan umum di Indonesia."
+  "valid": true,
+  "message": "Input 'PT Sinar Mentari' adalah nama perusahaan yang valid dan umum di Indonesia."
 }
 ```
 
