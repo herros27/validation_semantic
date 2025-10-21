@@ -1,60 +1,21 @@
-name: Auto Build and Publish Maturin Wheels
+# .github/workflows/release.yml
+name: Build and Publish Maturin Wheels
 
 on:
   push:
-    branches:
-      - main # trigger otomatis saat push ke main
-  workflow_dispatch: # bisa dijalankan manual juga
+    tags:
+      - "v*" # contoh: v0.1.0, v1.0.1
 
 permissions:
   contents: write
 
 jobs:
-  bump-tag:
-    name: Bump Tag Automatically
-    runs-on: ubuntu-latest
-    outputs:
-      new_tag: ${{ steps.set_tag.outputs.new_tag }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # pastikan semua history dan tag tersedia
-
-      - name: Fetch all tags
-        run: git fetch --tags
-
-      - name: Get latest tag
-        id: get_latest
-        run: |
-          LATEST_TAG=$(git describe --tags --abbrev=0 || echo "v0.0.0")
-          echo "Latest tag: $LATEST_TAG"
-          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
-
-      - name: Increment patch version and push tag
-        id: set_tag
-        # env: PAT_TOKEN tidak dibutuhkan lagi
-        run: |
-          IFS='.' read -r MAJOR MINOR PATCH <<< "${LATEST_TAG#v}"
-          PATCH=$((PATCH+1))
-          NEW_TAG="v${MAJOR}.${MINOR}.${PATCH}"
-          echo "New tag: $NEW_TAG"
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag $NEW_TAG
-          # Cukup push ke 'origin'
-          git push origin $NEW_TAG
-
-          echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
-
   build:
-    name: Build Wheels
     runs-on: ${{ matrix.os }}
-    needs: bump-tag
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -80,11 +41,11 @@ jobs:
           path: target/wheels/*.whl
 
   release:
-    name: Publish Release
     runs-on: ubuntu-latest
     needs: build
     permissions:
       contents: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -104,7 +65,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # 🧩 Tambahan: Publish ke TestPyPI
       - name: Publish to TestPyPI
+        if: startsWith(github.ref, 'refs/tags/v')
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
