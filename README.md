@@ -1,6 +1,4 @@
 
-
-````markdown
 # 🤖 `semantic_validation`
 
 ![GitHub last commit](https://img.shields.io/github/last-commit/herros27/validation_semantic)
@@ -85,7 +83,7 @@ result = validate_input_py(
 )
 
 print(json.dumps(result, indent=4, ensure_ascii=False))
-````
+
 
 ### Hasil Output
 
