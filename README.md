@@ -14,6 +14,12 @@ Library ini tidak hanya memeriksa validitas data secara **sintaksis** (misalnya 
 Berbeda dari validator konvensional, `validation_semantic` berfokus pada **pemahaman arti dan tujuan data**, bukan sekadar pola teks.
 Sebagai contoh, library ini dapat membedakan apakah sebuah input lebih sesuai dikategorikan sebagai nama institusi, alamat email, deskripsi, atau teks naratif — menghasilkan validasi yang jauh lebih presisi dan bermakna.
 
+---
+##  🧠 **Research Notice:**  
+> This library was developed as part of an academic research project.  
+> Developers are encouraged to try it out and share feedback about its performance and usability.  
+> For more details, see the [Research Participation & Feedback](#-research-participation--feedback-request) section below.
+---
 ### 🌍 Dukungan Multiplatform
 
 Kelebihan utama `validation_semantic` terletak pada desain modular dan interoperabilitas lintas platform melalui **bindings**:
@@ -44,7 +50,8 @@ Dengan kombinasi **kecepatan Rust** dan **kecerdasan Gemini**, `validation_seman
    * [📦 Validasi Banyak Input Sekaligus (Batch Validation)](#-validasi-banyak-input-sekaligus-batch-validation-dengan-python)
 5. [🧩 Jenis Input yang Dapat Divalidasi](#️-jenis-input-yang-dapat-divalidasi)
 6. [🤝 Kontribusi](#-kontribusi)
-7. [📄 Lisensi](#-lisensi)
+7. [Research Participation & Feedback](#-research-participation--feedback-request)
+8. [📄 Lisensi](#-lisensi)
 
 ---
 
@@ -507,6 +514,27 @@ Berikut daftar lengkap jenis input yang dapat divalidasi beserta **fungsi atau k
 
 Kontribusi sangat diterima!
 Silakan buat *issue* atau *pull request* di [GitHub Repository](https://github.com/herros27/validation_semantic).
+
+---
+
+## 📊 Research Participation & Feedback Request
+
+This library, **`validation_semantic`**, was developed as part of an **academic research project** focused on evaluating the performance and usability of semantic validation systems powered by AI.
+
+If you are a **developer** using this library, your feedback is highly valuable to the research.  
+Please try using the library with various types of inputs such as **names**, **addresses**, **titles**, **descriptions**, or **text areas**, and share your experience.
+
+You may include:
+- Your thoughts on the **ease of use** and **developer experience**
+- The **performance** or **accuracy** of the validation
+- Any **issues or improvements** you would suggest
+- (Optional) **Proof or example** of how you integrated this library in your project
+
+Your contribution will directly support the evaluation and improvement of this research project.
+
+📩 You can contact me directly at: **[khairusnyah8935@gmail.com](mailto:khairusnyah8935@gmail.com)**  
+
+Thank you very much for taking the time to participate and contribute to this study. 🙏
 
 ---
 
