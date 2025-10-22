@@ -116,7 +116,14 @@ export default defineConfig({
   ],
 })
 ```
+## 🔑 Konfigurasi
 
+Library ini memerlukan API Key dari Google AI Studio.
+
+```bash
+# Buat file .env dan buat envirovment variabel seperti di bawah:
+VITE_GEMINI_API_KEY="API_KEY_ANDA"
+```
 ---
 
 ### 🚀 3️⃣ Gunakan Modul WASM di React
@@ -136,10 +143,11 @@ export default function Example() {
     const models = wasmModule.getSupportedModelSelectors();
     const model = models["GEMINI_2_5_FLASH"];
 
-    const result = await wasmModule.validateTextJs(
+    const result = await wasmModule.validateInput(
       "PT Sinar Mentari",
       model,
-      "Nama Perusahaan"
+      "Nama Perusahaan",
+      import.meta.env.VITE_GEMINI_API_KEY
     );
 
     console.log(result);
@@ -165,32 +173,58 @@ export default function Example() {
 
 ### 🧠 5️⃣ Contoh Validasi Banyak Input Sekaligus (Batch Validation)
 
-Kamu dapat melakukan **validasi beberapa input sekaligus** menggunakan `validateTextJs` dari modul WASM.
+Kamu dapat melakukan **validasi beberapa input sekaligus** menggunakan `validateInput` dari modul WASM.
 Setiap input diproses secara **asynchronous dan paralel** untuk efisiensi.
 
 ```tsx
+import React, { useState } from "react";
 import { useWasm } from "validation_semantic";
 
 type InputType =
   | "email"
-  | "nama institusi"
-  | "nama perusahaan"
-  | "nama produk"
-  | "nama lokasi"
-  | "nama lengkap"
-  | "judul"
-  | "pekerjaan"
+  | "institution name"
+  | "company name"
+  | "product name"
+  | "location name"
+  | "full name"
+  | "title"
+  | "occupation"
   | "tag"
-  | "alamat"
+  | "address"
   | "text area";
 
 export default function BatchValidationExample() {
   const { wasmReady, wasmModule, error: wasmError } = useWasm();
-  const modelToUseKey = "GEMINI_2_5_FLASH";
+  const modelToUseKey = "GEMINI_FLASH"; //GEMINI_FLASH_LITE, GEMINI_FLASH_LATEST, GEMMA
+
+  const [formData, setFormData] = useState<Record<InputType, string>>({
+    email: "",
+    "full name": "",
+    address: "",
+    "product name": "",
+    "institution name": "",
+    "company name": "",
+    "location name": "",
+    title: "",
+    occupation: "",
+    tag: "",
+    "text area": "",
+  });
+
+  const [results, setResults] = useState<Record<string, any> | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  // Handler perubahan input
+  const handleChange = (key: InputType, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
 
   async function validateBatchInputs() {
     if (!wasmReady || !wasmModule) {
-      console.error("Modul WASM belum siap.");
+      alert("WASM module is not ready.");
       return;
     }
 
@@ -198,53 +232,93 @@ export default function BatchValidationExample() {
     const modelSelectorInt = supportedModels[modelToUseKey];
 
     if (typeof modelSelectorInt === "undefined") {
-      throw new Error(`Model ${modelToUseKey} tidak ditemukan.`);
+      alert(`Model ${modelToUseKey} not found.`);
+      return;
     }
 
-    // Kumpulan input yang akan divalidasi
-    const inputs: Record<InputType, string> = {
-      "email": "john@example.com",
-      "nama lengkap": "John Doe",
-      "alamat": "Jl. Mawar No. 123",
-      "nama produk": "Error produk",
-      // input lain bisa ditambahkan di sini
-    };
+    setLoading(true);
+    try {
+      const validationPromises = Object.entries(formData)
+        .filter(([_, value]) => value.trim() !== "") // hanya input yang diisi
+        .map(async ([inputType, inputValue]) => {
+          try {
+            const result = await wasmModule.validateInput(
+              inputValue,
+              modelSelectorInt,
+              inputType as InputType,
+              import.meta.env.VITE_GEMINI_API_KEY
+            );
+            return { inputType, inputValue, result, error: null };
+          } catch (err: any) {
+            return {
+              inputType,
+              inputValue,
+              result: null,
+              error: err?.message ?? "Validation error occurred.",
+            };
+          }
+        });
 
-    // Jalankan semua validasi secara paralel
-    const validationPromises = Object.entries(inputs).map(
-      async ([inputType, inputValue]) => {
-        try {
-          const result = await wasmModule.validateTextJs(
-            inputValue,
-            modelSelectorInt,
-            inputType as InputType
-          );
-          return { inputType, inputValue, result, error: null };
-        } catch (err: any) {
-          return {
-            inputType,
-            inputValue,
-            result: null,
-            error: err?.message ?? "Terjadi kesalahan saat validasi.",
-          };
-        }
-      }
-    );
+      const results = await Promise.all(validationPromises);
+      const batchResults = Object.fromEntries(
+        results.map((r) => [
+          r.inputType,
+          { input: r.inputValue, result: r.result, error: r.error },
+        ])
+      );
 
-    // Tunggu semua selesai dan susun hasilnya
-    const results = await Promise.all(validationPromises);
-    const batchResults = Object.fromEntries(
-      results.map((r) => [
-        r.inputType,
-        { input: r.inputValue, result: r.result, error: r.error },
-      ])
-    );
-
-    console.log("Hasil Validasi Batch:", batchResults);
+      setResults(batchResults);
+      console.log("Batch Validation Results:", batchResults);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  // Jalankan validasi batch (contoh pemanggilan)
-  if (!wasmError) validateBatchInputs();
+  return (
+    <div className='max-w-xl mx-auto p-4 space-y-6'>
+      <h1 className='text-xl font-bold text-center'>Batch Validation Form</h1>
+
+      {/* Form Input */}
+      <div className='space-y-4'>
+        {Object.keys(formData).map((key) => (
+          <div key={key} className='flex flex-col'>
+            <label className='font-semibold capitalize'>{key}</label>
+            <input
+              type='text'
+              className='border border-gray-300 rounded-md p-2'
+              value={formData[key as InputType]}
+              onChange={(e) => handleChange(key as InputType, e.target.value)}
+              placeholder={`Masukkan ${key}`}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Tombol Validasi */}
+      <button
+        onClick={validateBatchInputs}
+        disabled={loading || !wasmReady}
+        className='bg-blue-600 text-white px-4 py-2 rounded-md w-full disabled:opacity-50'>
+        {loading ? "Validating..." : "Validate All Inputs"}
+      </button>
+
+      {/* Hasil */}
+      {results && (
+        <div className='mt-6 bg-gray-100 p-4 rounded-md'>
+          <h2 className='font-semibold mb-2'>Validation Results:</h2>
+          <pre className='text-sm bg-white p-2 rounded-md overflow-x-auto'>
+            {JSON.stringify(results, null, 2)}
+          </pre>
+        </div>
+      )}
+
+      {wasmError && (
+        <p className='text-red-500 text-sm text-center mt-4'>
+          Error loading WASM: {wasmError}
+        </p>
+      )}
+    </div>
+  );
 }
 
 ```
@@ -286,7 +360,7 @@ export default function BatchValidationExample() {
 
 ### 💡 Catatan
 
-* Fungsi `validateTextJs()` tetap digunakan seperti pada validasi tunggal.
+* Fungsi `validateInput()` tetap digunakan seperti pada validasi tunggal.
 * Perbedaan utamanya adalah semua input dikirim **sekaligus** menggunakan `Promise.all()` agar berjalan paralel.
 * Kamu bisa menyesuaikan daftar input sesuai kebutuhan form atau dataset kamu.
 
@@ -296,11 +370,11 @@ export default function BatchValidationExample() {
 
 ### 📘 5️⃣ Ringkasan Fungsi Utama
 
-| Fungsi                                    | Deskripsi                                            |
-| ----------------------------------------- | ---------------------------------------------------- |
-| `useWasm()`                               | *Hook* untuk memuat dan menginisialisasi modul WASM. |
-| `wasmModule.getSupportedModelSelectors()` | Mengambil daftar model yang tersedia.                |
-| `validateTextJs(text, model, type)`       | Melakukan validasi semantik teks.                    |
+| Fungsi                                           | Deskripsi                                            |
+| ------------------------------------------------ | ---------------------------------------------------- |
+| `useWasm()`                                      | *Hook* untuk memuat dan menginisialisasi modul WASM. |
+| `wasmModule.getSupportedModelSelectors()`        | Mengambil daftar model yang tersedia.                |
+| `validateInput(text, model, type,youur_api_key)` | Melakukan validasi semantik teks.                    |
 
 ---
 
@@ -325,11 +399,8 @@ from validation_semantic import validate_input_py, SupportedModel
 Library ini memerlukan API Key dari Google AI Studio.
 
 ```bash
-# Linux/macOS
-export GEMINI_API_KEY="API_KEY_ANDA"
-
-# Windows (Command Prompt)
-set GEMINI_API_KEY="API_KEY_ANDA"
+# Membuat .env dengan variabel berisi API key dari google studio anda :
+GEMINI_API_KEY="API_KEY_ANDA"
 ```
 
 ---
