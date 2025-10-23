@@ -6,6 +6,9 @@
 ![GitHub stars](https://img.shields.io/github/stars/herros27/validation_semantic?style=social)
 ![TestPyPI](https://img.shields.io/badge/TestPyPI-validation--semantic-blue?logo=pypi)
 ![Rust Build Status](https://github.com/herros27/validation_semantic/actions/workflows/release.yml/badge.svg)
+![npm version](https://img.shields.io/npm/v/validation_semantic?logo=npm)
+![npm downloads](https://img.shields.io/npm/dt/validation_semantic?logo=npm)
+
 
 `validation_semantic` adalah *library* **validasi semantik** yang cepat, aman, dan cerdas — dibangun sepenuhnya dengan **Rust** dan didukung oleh **model Gemini dari Google AI Studio**.
 
@@ -15,10 +18,13 @@ Berbeda dari validator konvensional, `validation_semantic` berfokus pada **pemah
 Sebagai contoh, library ini dapat membedakan apakah sebuah input lebih sesuai dikategorikan sebagai nama institusi, alamat email, deskripsi, atau teks naratif — menghasilkan validasi yang jauh lebih presisi dan bermakna.
 
 ---
-##  🧠 **Research Notice:**  
-> This library was developed as part of an academic research project.  
-> Developers are encouraged to try it out and share feedback about its performance and usability.  
-> For more details, see the [Research Participation & Feedback](#-research-participation--feedback-request) section below.
+
+## 🧠 **Catatan Penelitian:**
+
+> Library ini dikembangkan sebagai bagian dari proyek penelitian akademik.
+> Pengembang didorong untuk mencoba dan memberikan umpan balik terkait kinerja serta kemudahan penggunaannya.
+> Untuk informasi lebih lanjut, lihat bagian [Partisipasi Penelitian & Permintaan Umpan Balik](#-partisipasi-penelitian--permintaan-umpan-balik) di bawah ini.
+
 ---
 ### 🌍 Dukungan Multiplatform
 
@@ -77,10 +83,10 @@ Saat ini, library ini dapat digunakan di dua platform utama:
 
 ---
 
-## ⚛️ Menggunakan Library di React (Vite)
+## ⚛️ Menggunakan Library di React (Vite) / Next JS
 
 Library ini dapat digunakan di **React (Vite)** dengan memanfaatkan **WebAssembly (WASM)** yang dibangun menggunakan Rust.
-Langkah-langkah berikut menjelaskan cara instalasi dan penggunaannya.
+Langkah-langkah berikut menjelaskan cara instalasi dan penggunaannya. Untuk Next JS, sudah otomatis support WASM, tidak memerlukan setting seperti di vite, tinggal menggunakan tag WasmProvider yang membungkus tag lain. Library ini hanya bisa di gunakan dengan file yang di bagian atas nya mempunyai "use client".
 
 ---
 
@@ -588,26 +594,28 @@ Silakan buat *issue* atau *pull request* di [GitHub Repository](https://github.c
 
 ---
 
-## 📊 Research Participation & Feedback Request
+## 📊 Partisipasi Penelitian & Permintaan Umpan Balik
 
-This library, **`validation_semantic`**, was developed as part of an **academic research project** focused on evaluating the performance and usability of semantic validation systems powered by AI.
+Library **`validation_semantic`** ini dikembangkan sebagai bagian dari **proyek penelitian akademik** yang berfokus pada evaluasi kinerja dan kemudahan penggunaan sistem validasi semantik berbasis AI.
 
-If you are a **developer** using this library, your feedback is highly valuable to the research.  
-Please try using the library with various types of inputs such as **names**, **addresses**, **titles**, **descriptions**, or **text areas**, and share your experience.
+Jika Anda adalah seorang **pengembang** yang menggunakan library ini, umpan balik Anda sangat berharga bagi penelitian ini.
+Silakan coba gunakan library ini dengan berbagai jenis input seperti **nama**, **alamat**, **judul**, **deskripsi**, atau **kolom teks**, dan bagikan pengalaman Anda.
 
-You may include:
-- Your thoughts on the **ease of use** and **developer experience**
-- The **performance** or **accuracy** of the validation
-- Any **issues or improvements** you would suggest
-- (Optional) **Proof or example** of how you integrated this library in your project
+Anda dapat menyertakan:
 
-Your contribution will directly support the evaluation and improvement of this research project.
+* Pendapat Anda mengenai **kemudahan penggunaan** dan **pengalaman pengembang**
+* **Kinerja** atau **akurasi** dari hasil validasi
+* Setiap **masalah atau saran perbaikan** yang ingin Anda ajukan
+* (Opsional) **Bukti atau contoh** bagaimana Anda mengintegrasikan library ini ke dalam proyek Anda
 
-📩 You can contact me directly at: **[khairusnyah8935@gmail.com](mailto:khairusnyah8935@gmail.com)**  
+Kontribusi Anda akan secara langsung mendukung evaluasi dan pengembangan lebih lanjut dari proyek penelitian ini.
 
-Thank you very much for taking the time to participate and contribute to this study. 🙏
+📩 Anda dapat menghubungi saya secara langsung di: **[khairusnyah8935@gmail.com](mailto:khairusnyah8935@gmail.com)**
+
+Terima kasih banyak telah meluangkan waktu untuk berpartisipasi dan berkontribusi dalam penelitian ini. 🙏
 
 ---
+
 
 ## 📄 Lisensi
 
