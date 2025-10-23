@@ -594,6 +594,8 @@ Silakan buat *issue* atau *pull request* di [GitHub Repository](https://github.c
 
 ---
 
+---
+
 ## 📊 Partisipasi Penelitian & Permintaan Umpan Balik
 
 Library **`validation_semantic`** ini dikembangkan sebagai bagian dari **proyek penelitian akademik** yang berfokus pada evaluasi kinerja dan kemudahan penggunaan sistem validasi semantik berbasis AI.
@@ -610,7 +612,8 @@ Anda dapat menyertakan:
 
 Kontribusi Anda akan secara langsung mendukung evaluasi dan pengembangan lebih lanjut dari proyek penelitian ini.
 
-📩 Anda dapat menghubungi saya secara langsung di: **[khairusnyah8935@gmail.com](mailto:khairusnyah8935@gmail.com)**
+📬 Untuk memberikan umpan balik, silakan buat **issue baru** di halaman GitHub repository berikut:
+👉 [Buka Issues di GitHub](https://github.com/herros27/validation_semantic/issues)
 
 Terima kasih banyak telah meluangkan waktu untuk berpartisipasi dan berkontribusi dalam penelitian ini. 🙏
 
