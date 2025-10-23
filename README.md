@@ -512,30 +512,38 @@ if __name__ == "__main__":
 
 ```json
 {
-    "nama": {
-        "input": "John Doe",
-        "result": {
-            "valid": true,
-            "message": "Nama valid."
-        },
-        "error": null
+  "email": {
+    "input": "khairunsyah8935@gmail.com",
+    "result": {
+      "valid": true,
+      "message": "Alamat email valid. Format dan domain sudah benar, bukan domain contoh atau domain sekali pakai, dan panjangnya tidak melebihi batas."
     },
-    "email": {
-        "input": "john@example.com",
-        "result": {
-            "valid": false,
-            "message": "Alamat email menggunakan domain 'example.com' yang merupakan domain contoh dan tidak valid untuk penggunaan nyata. Silakan gunakan domain yang valid dan profesional."
-        },
-        "error": null
+    "error": null
+  },
+  "full name": {
+    "input": "XYZ",
+    "result": {
+      "valid": false,
+      "message": "Input 'XYZ' tidak terlihat seperti nama manusia, institusi, atau entitas yang realistis. Ini lebih menyerupai placeholder atau singkatan generik."
     },
-    "alamat": {
-        "input": "error di sini",
-        "result": {
-            "valid": false,
-            "message": "Alamat tidak valid karena mengandung kata-kata yang tidak membentuk struktur alamat fisik yang realistis."
-        },
-        "error": null
-    }
+    "error": null
+  },
+  "address": {
+    "input": "My House",
+    "result": {
+      "valid": false,
+      "message": "Input 'My House' terlalu umum dan tidak mengandung elemen geografis yang spesifik dan realistis seperti nama jalan, nomor, kota, atau kode pos. Ini tidak dapat digunakan sebagai alamat yang valid."
+    },
+    "error": null
+  },
+  "company name": {
+    "input": "Companyy",
+    "result": {
+      "valid": false,
+      "message": "Input 'Companyy' terlalu generik dan tidak terdengar seperti nama perusahaan yang spesifik atau realistis. Penulisan dengan dua 'y' di akhir juga terlihat tidak lazim untuk nama entitas asli, menyerupai placeholder atau nama uji coba. Mohon gunakan nama perusahaan yang lebih spesifik dan realistis."
+    },
+    "error": null
+  }
 }
 
 ```
