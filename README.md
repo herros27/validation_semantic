@@ -1,6 +1,6 @@
 ---
 
-# 🤖 Library `validation_semantic` Dengan Gemini API
+# 🤖 Library `Semantic Validation` Dengan Gemini API
 
 ![GitHub last commit](https://img.shields.io/github/last-commit/herros27/validation_semantic)
 ![GitHub stars](https://img.shields.io/github/stars/herros27/validation_semantic?style=social)
