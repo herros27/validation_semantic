@@ -17,7 +17,9 @@ Library ini tidak hanya memeriksa validitas data secara **sintaksis** (misalnya 
 Berbeda dari validator konvensional, `validation_semantic` berfokus pada **pemahaman arti dan tujuan data**, bukan sekadar pola teks.
 Sebagai contoh, library ini dapat membedakan apakah sebuah input lebih sesuai dikategorikan sebagai nama institusi, alamat email, deskripsi, atau teks naratif — menghasilkan validasi yang jauh lebih presisi dan bermakna.
 
-
+> ⚠️ **Catatan:** Library ini **masih dalam tahap eksperimental**.
+> Fitur, API, dan hasil validasi dapat berubah pada versi berikutnya seiring dengan pengujian dan peningkatan performa.
+> 🧩 **Masukan dari pengembang sangat dibutuhkan** — saran, laporan bug, dan kontribusi Anda sangat membantu dalam mengembangkan dan menstabilkan library ini.
 ---
 
 ## 🧠 **Catatan Penelitian:**
