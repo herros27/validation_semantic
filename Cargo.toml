@@ -1,6 +1,6 @@
 [package]
 name = "validation_semantic"
-version = "1.1.0"
+version = "1.1.1"
 edition = "2021"
 build = "build.rs"
 authors = ["Kemas Khairunsyah <khairunsyah8935@gmail.com>"]
