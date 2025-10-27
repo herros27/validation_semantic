@@ -8,7 +8,7 @@
 ![Rust Build Status](https://github.com/herros27/validation_semantic/actions/workflows/release.yml/badge.svg)
 ![npm version](https://img.shields.io/npm/v/validation_semantic?logo=npm)
 ![npm downloads](https://img.shields.io/npm/dt/validation_semantic?logo=npm)
-
+![status: experimental](https://img.shields.io/badge/status-experimental-orange)
 
 `validation_semantic` adalah *library* **validasi semantik** yang cepat, aman, dan cerdas — dibangun sepenuhnya dengan **Rust** dan didukung oleh **model Gemini dari Google AI Studio**.
 
@@ -16,6 +16,9 @@ Library ini tidak hanya memeriksa validitas data secara **sintaksis** (misalnya 
 
 Berbeda dari validator konvensional, `validation_semantic` berfokus pada **pemahaman arti dan tujuan data**, bukan sekadar pola teks.
 Sebagai contoh, library ini dapat membedakan apakah sebuah input lebih sesuai dikategorikan sebagai nama institusi, alamat email, deskripsi, atau teks naratif — menghasilkan validasi yang jauh lebih presisi dan bermakna.
+
+> ⚠️ **Catatan:** Library ini **masih dalam masa uji coba (experimental phase)**.
+> Fitur, API, dan hasil validasi dapat berubah di versi mendatang seiring dengan pengujian dan penyempurnaan performa.
 
 ---
 
@@ -91,7 +94,15 @@ Saat ini, library ini dapat digunakan di dua platform utama:
 ## ⚛️ Menggunakan Library di React (Vite) / Next JS
 
 Library ini dapat digunakan di **React (Vite)** dengan memanfaatkan **WebAssembly (WASM)** yang dibangun menggunakan Rust.
-Langkah-langkah berikut menjelaskan cara instalasi dan penggunaannya. Untuk Next JS, sudah otomatis support WASM, tidak memerlukan setting seperti di vite, tinggal menggunakan tag WasmProvider yang membungkus tag lain. Library ini hanya bisa di gunakan dengan file yang di bagian atas nya mempunyai "use client".
+Langkah-langkah berikut menjelaskan cara instalasi dan penggunaannya.
+
+Untuk **Next JS**, sudah otomatis mendukung WASM — tidak memerlukan konfigurasi tambahan seperti di Vite.
+Cukup gunakan komponen `WasmProvider` untuk membungkus tag lain.
+
+> ⚠️ Library ini hanya bisa digunakan pada file yang di bagian atasnya memiliki `"use client"`.
+
+Kunjungi repository **React-Library-Semantic-Validation** di:
+👉 [https://github.com/herros27/React-Library-Semantic-Validation/pkgs/npm/validation_semantic](https://github.com/herros27/React-Library-Semantic-Validation/pkgs/npm/validation_semantic)
 
 ---
 
