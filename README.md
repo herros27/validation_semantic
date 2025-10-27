@@ -6,6 +6,9 @@
 ![GitHub stars](https://img.shields.io/github/stars/herros27/validation_semantic?style=social)
 ![TestPyPI](https://img.shields.io/badge/TestPyPI-validation--semantic-blue?logo=pypi)
 ![Rust Build Status](https://github.com/herros27/validation_semantic/actions/workflows/release.yml/badge.svg)
+![npm version](https://img.shields.io/npm/v/validation_semantic?logo=npm)
+![npm downloads](https://img.shields.io/npm/dt/validation_semantic?logo=npm)
+
 
 `validation_semantic` adalah *library* **validasi semantik** yang cepat, aman, dan cerdas — dibangun sepenuhnya dengan **Rust** dan didukung oleh **model Gemini dari Google AI Studio**.
 
@@ -24,6 +27,15 @@ Sebagai contoh, library ini dapat membedakan apakah sebuah input lebih sesuai di
 
 ---
 
+---
+
+## 🧠 **Catatan Penelitian:**
+
+> Library ini dikembangkan sebagai bagian dari proyek penelitian akademik.
+> Pengembang didorong untuk mencoba dan memberikan umpan balik terkait kinerja serta kemudahan penggunaannya.
+> Untuk informasi lebih lanjut, lihat bagian [Partisipasi Penelitian & Permintaan Umpan Balik](#-partisipasi-penelitian--permintaan-umpan-balik) di bawah ini.
+
+---
 ### 🌍 Dukungan Multiplatform
 ---
 Kelebihan utama `validation_semantic` terletak pada desain modular dan interoperabilitas lintas platform melalui **bindings**:
@@ -54,7 +66,8 @@ Dengan kombinasi **kecepatan Rust** dan **kecerdasan Gemini**, `validation_seman
    * [📦 Validasi Banyak Input Sekaligus (Batch Validation)](#-validasi-banyak-input-sekaligus-batch-validation-dengan-python)
 5. [🧩 Jenis Input yang Dapat Divalidasi](#️-jenis-input-yang-dapat-divalidasi)
 6. [🤝 Kontribusi](#-kontribusi)
-7. [📄 Lisensi](#-lisensi)
+7. [Research Participation & Feedback](#-research-participation--feedback-request)
+8. [📄 Lisensi](#-lisensi)
 
 ---
 
@@ -80,10 +93,10 @@ Saat ini, library ini dapat digunakan di dua platform utama:
 
 ---
 
-## ⚛️ Menggunakan Library di React (Vite)
+## ⚛️ Menggunakan Library di React (Vite) / Next JS
 
 Library ini dapat digunakan di **React (Vite)** dengan memanfaatkan **WebAssembly (WASM)** yang dibangun menggunakan Rust.
-Langkah-langkah berikut menjelaskan cara instalasi dan penggunaannya.
+Langkah-langkah berikut menjelaskan cara instalasi dan penggunaannya. Untuk Next JS, sudah otomatis support WASM, tidak memerlukan setting seperti di vite, tinggal menggunakan tag WasmProvider yang membungkus tag lain. Library ini hanya bisa di gunakan dengan file yang di bagian atas nya mempunyai "use client".
 
 ---
 
@@ -119,7 +132,14 @@ export default defineConfig({
   ],
 })
 ```
+## 🔑 Konfigurasi
 
+Library ini memerlukan API Key dari Google AI Studio.
+
+```bash
+# Buat file .env dan buat envirovment variabel seperti di bawah:
+VITE_GEMINI_API_KEY="API_KEY_ANDA"
+```
 ---
 
 ### 🚀 3️⃣ Gunakan Modul WASM di React
@@ -143,7 +163,7 @@ export default function Example() {
       "PT Sinar Mentari",
       model,
       "Nama Perusahaan",
-      api_key_gemini
+      import.meta.env.VITE_GEMINI_API_KEY
     );
 
     console.log(result);
@@ -173,28 +193,54 @@ Kamu dapat melakukan **validasi beberapa input sekaligus** menggunakan `validate
 Setiap input diproses secara **asynchronous dan paralel** untuk efisiensi.
 
 ```tsx
+import React, { useState } from "react";
 import { useWasm } from "validation_semantic";
 
 type InputType =
   | "email"
-  | "nama institusi"
-  | "nama perusahaan"
-  | "nama produk"
-  | "nama lokasi"
-  | "nama lengkap"
-  | "judul"
-  | "pekerjaan"
+  | "institution name"
+  | "company name"
+  | "product name"
+  | "location name"
+  | "full name"
+  | "title"
+  | "occupation"
   | "tag"
-  | "alamat"
+  | "address"
   | "text area";
 
 export default function BatchValidationExample() {
   const { wasmReady, wasmModule, error: wasmError } = useWasm();
-  const modelToUseKey = "GEMINI_2_5_FLASH";
+  const modelToUseKey = "GEMINI_FLASH"; //GEMINI_FLASH_LITE, GEMINI_FLASH_LATEST, GEMMA
+
+  const [formData, setFormData] = useState<Record<InputType, string>>({
+    email: "",
+    "full name": "",
+    address: "",
+    "product name": "",
+    "institution name": "",
+    "company name": "",
+    "location name": "",
+    title: "",
+    occupation: "",
+    tag: "",
+    "text area": "",
+  });
+
+  const [results, setResults] = useState<Record<string, any> | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  // Handler perubahan input
+  const handleChange = (key: InputType, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
 
   async function validateBatchInputs() {
     if (!wasmReady || !wasmModule) {
-      console.error("Modul WASM belum siap.");
+      alert("WASM module is not ready.");
       return;
     }
 
@@ -202,54 +248,93 @@ export default function BatchValidationExample() {
     const modelSelectorInt = supportedModels[modelToUseKey];
 
     if (typeof modelSelectorInt === "undefined") {
-      throw new Error(`Model ${modelToUseKey} tidak ditemukan.`);
+      alert(`Model ${modelToUseKey} not found.`);
+      return;
     }
 
-    // Kumpulan input yang akan divalidasi
-    const inputs: Record<InputType, string> = {
-      "email": "john@example.com",
-      "nama lengkap": "John Doe",
-      "alamat": "Jl. Mawar No. 123",
-      "nama produk": "Error produk",
-      // input lain bisa ditambahkan di sini
-    };
+    setLoading(true);
+    try {
+      const validationPromises = Object.entries(formData)
+        .filter(([_, value]) => value.trim() !== "") // hanya input yang diisi
+        .map(async ([inputType, inputValue]) => {
+          try {
+            const result = await wasmModule.validateInput(
+              inputValue,
+              modelSelectorInt,
+              inputType as InputType,
+              import.meta.env.VITE_GEMINI_API_KEY
+            );
+            return { inputType, inputValue, result, error: null };
+          } catch (err: any) {
+            return {
+              inputType,
+              inputValue,
+              result: null,
+              error: err?.message ?? "Validation error occurred.",
+            };
+          }
+        });
 
-    // Jalankan semua validasi secara paralel
-    const validationPromises = Object.entries(inputs).map(
-      async ([inputType, inputValue]) => {
-        try {
-          const result = await wasmModule.validateInput(
-            inputValue,
-            modelSelectorInt,
-            inputType as InputType,
-            api_key_gemini
-          );
-          return { inputType, inputValue, result, error: null };
-        } catch (err: any) {
-          return {
-            inputType,
-            inputValue,
-            result: null,
-            error: err?.message ?? "Terjadi kesalahan saat validasi.",
-          };
-        }
-      }
-    );
+      const results = await Promise.all(validationPromises);
+      const batchResults = Object.fromEntries(
+        results.map((r) => [
+          r.inputType,
+          { input: r.inputValue, result: r.result, error: r.error },
+        ])
+      );
 
-    // Tunggu semua selesai dan susun hasilnya
-    const results = await Promise.all(validationPromises);
-    const batchResults = Object.fromEntries(
-      results.map((r) => [
-        r.inputType,
-        { input: r.inputValue, result: r.result, error: r.error },
-      ])
-    );
-
-    console.log("Hasil Validasi Batch:", batchResults);
+      setResults(batchResults);
+      console.log("Batch Validation Results:", batchResults);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  // Jalankan validasi batch (contoh pemanggilan)
-  if (!wasmError) validateBatchInputs();
+  return (
+    <div className='max-w-xl mx-auto p-4 space-y-6'>
+      <h1 className='text-xl font-bold text-center'>Batch Validation Form</h1>
+
+      {/* Form Input */}
+      <div className='space-y-4'>
+        {Object.keys(formData).map((key) => (
+          <div key={key} className='flex flex-col'>
+            <label className='font-semibold capitalize'>{key}</label>
+            <input
+              type='text'
+              className='border border-gray-300 rounded-md p-2'
+              value={formData[key as InputType]}
+              onChange={(e) => handleChange(key as InputType, e.target.value)}
+              placeholder={`Masukkan ${key}`}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Tombol Validasi */}
+      <button
+        onClick={validateBatchInputs}
+        disabled={loading || !wasmReady}
+        className='bg-blue-600 text-white px-4 py-2 rounded-md w-full disabled:opacity-50'>
+        {loading ? "Validating..." : "Validate All Inputs"}
+      </button>
+
+      {/* Hasil */}
+      {results && (
+        <div className='mt-6 bg-gray-100 p-4 rounded-md'>
+          <h2 className='font-semibold mb-2'>Validation Results:</h2>
+          <pre className='text-sm bg-white p-2 rounded-md overflow-x-auto'>
+            {JSON.stringify(results, null, 2)}
+          </pre>
+        </div>
+      )}
+
+      {wasmError && (
+        <p className='text-red-500 text-sm text-center mt-4'>
+          Error loading WASM: {wasmError}
+        </p>
+      )}
+    </div>
+  );
 }
 
 ```
@@ -264,75 +349,36 @@ export default function BatchValidationExample() {
     "input": "khairunsyah8935@gmail.com",
     "result": {
       "valid": true,
-      "message": "Alamat email valid."
+      "message": "Alamat email valid. Format dan domain sudah benar, bukan domain contoh atau domain sekali pakai, dan panjangnya tidak melebihi batas."
     },
     "error": null
   },
-  "nama lengkap": {
-    "input": "Kemas Khairunsyah",
-    "result": {
-      "valid": true,
-      "message": "Nama valid."
-    },
-    "error": null
-  },
-  "alamat": {
-    "input": "JL. Estika, Paal Satu, Tanjung Pandan",
-    "result": {
-      "valid": true,
-      "message": "Alamat valid karena mengandung nama jalan (JL. Estika) dan nama kota (Tanjung Pandan) serta formatnya masuk akal."
-    },
-    "error": null
-  },
-  "nama produk": {
-    "input": "Produk Ga Jelas Nih",
+  "full name": {
+    "input": "XYZ",
     "result": {
       "valid": false,
-      "message": "Nama produk ini tidak jelas dan tidak memberikan informasi spesifik tentang produk yang sebenarnya, sehingga tidak realistis untuk pasar."
+      "message": "Input 'XYZ' tidak terlihat seperti nama manusia, institusi, atau entitas yang realistis. Ini lebih menyerupai placeholder atau singkatan generik."
     },
     "error": null
   },
-  "nama institusi": {
-    "input": "Organisasi",
+  "address": {
+    "input": "My House",
     "result": {
       "valid": false,
-      "message": "Nama institusi tidak boleh hanya satu kata generik tanpa konteks institusional."
+      "message": "Input 'My House' terlalu umum dan tidak mengandung elemen geografis yang spesifik dan realistis seperti nama jalan, nomor, kota, atau kode pos. Ini tidak dapat digunakan sebagai alamat yang valid."
     },
     "error": null
   },
-  "nama perusahaan": {
-    "input": "Lorem Ipsum Corp",
+  "company name": {
+    "input": "Companyy",
     "result": {
       "valid": false,
-      "message": "Nama perusahaan tidak valid karena merupakan teks placeholder yang umum digunakan dan tidak mewakili nama bisnis yang realistis."
-    },
-    "error": null
-  },
-  "nama lokasi": {
-    "input": "Alamat tidak diketahui",
-    "result": {
-      "valid": false,
-      "message": "Nama lokasi tidak boleh berupa teks acak atau tidak bermakna seperti 'Alamat tidak diketahui'."
-    },
-    "error": null
-  },
-  "judul": {
-    "input": "asdf qwerty",
-    "result": {
-      "valid": false,
-      "message": "Judul tidak valid karena terdiri dari kata-kata acak dan tidak memiliki makna yang jelas."
-    },
-    "error": null
-  },
-  "pekerjaan": {
-    "input": "12345",
-    "result": {
-      "valid": false,
-      "message": "Judul pekerjaan tidak boleh hanya berupa angka."
+      "message": "Input 'Companyy' terlalu generik dan tidak terdengar seperti nama perusahaan yang spesifik atau realistis. Penulisan dengan dua 'y' di akhir juga terlihat tidak lazim untuk nama entitas asli, menyerupai placeholder atau nama uji coba. Mohon gunakan nama perusahaan yang lebih spesifik dan realistis."
     },
     "error": null
   }
 }
+
 ```
 
 ---
@@ -349,13 +395,11 @@ export default function BatchValidationExample() {
 
 ### 📘 5️⃣ Ringkasan Fungsi Utama
 
-
-
-| Fungsi                                                 | Deskripsi                                            |
-| ------------------------------------------------------ | ---------------------------------------------------- |
-| `useWasm()`                                            | *Hook* untuk memuat dan menginisialisasi modul WASM. |
-| `wasmModule.getSupportedModelSelectors()`              | Mengambil daftar model yang tersedia.                |
-| `validateInput(text, model, type, your_gemini_api_key)`| Melakukan validasi semantik teks.                    |
+| Fungsi                                           | Deskripsi                                            |
+| ------------------------------------------------ | ---------------------------------------------------- |
+| `useWasm()`                                      | *Hook* untuk memuat dan menginisialisasi modul WASM. |
+| `wasmModule.getSupportedModelSelectors()`        | Mengambil daftar model yang tersedia.                |
+| `validateInput(text, model, type,youur_api_key)` | Melakukan validasi semantik teks.                    |
 
 ---
 
@@ -379,7 +423,9 @@ from validation_semantic import validate_input_py, SupportedModel
 
 Library ini memerlukan API Key dari Google AI Studio.
 
-set GEMINI_API_KEY="API_KEY_ANDA"
+```bash
+# Membuat .env dengan variabel berisi API key dari google studio anda :
+GEMINI_API_KEY="API_KEY_ANDA"
 ```
 
 ---
@@ -489,71 +535,31 @@ if __name__ == "__main__":
     "input": "khairunsyah8935@gmail.com",
     "result": {
       "valid": true,
-      "message": "Alamat email valid."
+      "message": "Alamat email valid. Format dan domain sudah benar, bukan domain contoh atau domain sekali pakai, dan panjangnya tidak melebihi batas."
     },
     "error": null
   },
-  "nama lengkap": {
-    "input": "Kemas Khairunsyah",
-    "result": {
-      "valid": true,
-      "message": "Nama valid."
-    },
-    "error": null
-  },
-  "alamat": {
-    "input": "JL. Estika, Paal Satu, Tanjung Pandan",
-    "result": {
-      "valid": true,
-      "message": "Alamat valid karena mengandung nama jalan (JL. Estika) dan nama kota (Tanjung Pandan) serta formatnya masuk akal."
-    },
-    "error": null
-  },
-  "nama produk": {
-    "input": "Produk Ga Jelas Nih",
+  "full name": {
+    "input": "XYZ",
     "result": {
       "valid": false,
-      "message": "Nama produk ini tidak jelas dan tidak memberikan informasi spesifik tentang produk yang sebenarnya, sehingga tidak realistis untuk pasar."
+      "message": "Input 'XYZ' tidak terlihat seperti nama manusia, institusi, atau entitas yang realistis. Ini lebih menyerupai placeholder atau singkatan generik."
     },
     "error": null
   },
-  "nama institusi": {
-    "input": "Organisasi",
+  "address": {
+    "input": "My House",
     "result": {
       "valid": false,
-      "message": "Nama institusi tidak boleh hanya satu kata generik tanpa konteks institusional."
+      "message": "Input 'My House' terlalu umum dan tidak mengandung elemen geografis yang spesifik dan realistis seperti nama jalan, nomor, kota, atau kode pos. Ini tidak dapat digunakan sebagai alamat yang valid."
     },
     "error": null
   },
-  "nama perusahaan": {
-    "input": "Lorem Ipsum Corp",
+  "company name": {
+    "input": "Companyy",
     "result": {
       "valid": false,
-      "message": "Nama perusahaan tidak valid karena merupakan teks placeholder yang umum digunakan dan tidak mewakili nama bisnis yang realistis."
-    },
-    "error": null
-  },
-  "nama lokasi": {
-    "input": "Alamat tidak diketahui",
-    "result": {
-      "valid": false,
-      "message": "Nama lokasi tidak boleh berupa teks acak atau tidak bermakna seperti 'Alamat tidak diketahui'."
-    },
-    "error": null
-  },
-  "judul": {
-    "input": "asdf qwerty",
-    "result": {
-      "valid": false,
-      "message": "Judul tidak valid karena terdiri dari kata-kata acak dan tidak memiliki makna yang jelas."
-    },
-    "error": null
-  },
-  "pekerjaan": {
-    "input": "12345",
-    "result": {
-      "valid": false,
-      "message": "Judul pekerjaan tidak boleh hanya berupa angka."
+      "message": "Input 'Companyy' terlalu generik dan tidak terdengar seperti nama perusahaan yang spesifik atau realistis. Penulisan dengan dua 'y' di akhir juga terlihat tidak lazim untuk nama entitas asli, menyerupai placeholder atau nama uji coba. Mohon gunakan nama perusahaan yang lebih spesifik dan realistis."
     },
     "error": null
   }
@@ -624,6 +630,32 @@ Kontribusi sangat diterima!
 Silakan buat *issue* atau *pull request* di [GitHub Repository](https://github.com/herros27/validation_semantic).
 
 ---
+
+---
+
+## 📊 Partisipasi Penelitian & Permintaan Umpan Balik
+
+Library **`validation_semantic`** ini dikembangkan sebagai bagian dari **proyek penelitian akademik** yang berfokus pada evaluasi kinerja dan kemudahan penggunaan sistem validasi semantik berbasis AI.
+
+Jika Anda adalah seorang **pengembang** yang menggunakan library ini, umpan balik Anda sangat berharga bagi penelitian ini.
+Silakan coba gunakan library ini dengan berbagai jenis input seperti **nama**, **alamat**, **judul**, **deskripsi**, atau **kolom teks**, dan bagikan pengalaman Anda.
+
+Anda dapat menyertakan:
+
+* Pendapat Anda mengenai **kemudahan penggunaan** dan **pengalaman pengembang**
+* **Kinerja** atau **akurasi** dari hasil validasi
+* Setiap **masalah atau saran perbaikan** yang ingin Anda ajukan
+* (Opsional) **Bukti atau contoh** bagaimana Anda mengintegrasikan library ini ke dalam proyek Anda
+
+Kontribusi Anda akan secara langsung mendukung evaluasi dan pengembangan lebih lanjut dari proyek penelitian ini.
+
+📬 Untuk memberikan umpan balik, silakan buat **issue baru** di halaman GitHub repository berikut:
+👉 [Buka Issues di GitHub](https://github.com/herros27/validation_semantic/issues)
+
+Terima kasih banyak telah meluangkan waktu untuk berpartisipasi dan berkontribusi dalam penelitian ini. 🙏
+
+---
+
 
 ## 📄 Lisensi
 
