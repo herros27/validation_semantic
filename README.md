@@ -6,7 +6,7 @@
 ![PyPI](https://img.shields.io/pypi/v/validation-semantic?logo=pypi)
 ![npm version](https://img.shields.io/npm/v/validation_semantic?logo=npm)
 ![npm downloads](https://img.shields.io/npm/dt/validation_semantic?logo=npm)
-![PyPI downloads](https://static.pepy.tech/badge/validation-semantic)
+![PyPI downloads](https://static.pepy.tech/badge/validation-semantic?fallback=https://img.shields.io/badge/downloads-pending-lightgrey)
 ![status: experimental](https://img.shields.io/badge/status-experimental-orange)
 
 
