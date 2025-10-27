@@ -1,6 +1,6 @@
 ---
 
-# 🤖 Library `validation_semantic` Dengan Gemini API
+# 🤖 Library `Semantic Validation` Dengan Gemini API
 
 ![GitHub last commit](https://img.shields.io/github/last-commit/herros27/validation_semantic)
 ![GitHub stars](https://img.shields.io/github/stars/herros27/validation_semantic?style=social)
@@ -14,8 +14,18 @@ Library ini tidak hanya memeriksa validitas data secara **sintaksis** (misalnya 
 Berbeda dari validator konvensional, `validation_semantic` berfokus pada **pemahaman arti dan tujuan data**, bukan sekadar pola teks.
 Sebagai contoh, library ini dapat membedakan apakah sebuah input lebih sesuai dikategorikan sebagai nama institusi, alamat email, deskripsi, atau teks naratif — menghasilkan validasi yang jauh lebih presisi dan bermakna.
 
-### 🌍 Dukungan Multiplatform
+---
 
+## 🧠 **Catatan Penelitian:**
+
+> Pustaka ini dikembangkan sebagai bagian dari proyek penelitian akademis.
+> Pengembang didorong untuk mencobanya dan memberikan umpan balik mengenai kinerja dan kemudahan penggunaannya.
+> Untuk informasi selengkapnya, lihat bagian [📊 Permintaan Partisipasi Dan Umpan Balik Riset](#-permintaan-partisipasi-dan-umpan-balik-riset) di bawah ini.
+
+---
+
+### 🌍 Dukungan Multiplatform
+---
 Kelebihan utama `validation_semantic` terletak pada desain modular dan interoperabilitas lintas platform melalui **bindings**:
 
 * 🧩 **WebAssembly (WASM)** — memungkinkan integrasi di *frontend* seperti React atau Vue dengan performa tinggi langsung di browser.
@@ -61,7 +71,7 @@ Dengan kombinasi **kecepatan Rust** dan **kecerdasan Gemini**, `validation_seman
 
 ## 🚀 Memulai
 
-`semantic_validation` dirancang agar dapat digunakan lintas platform — Anda dapat memanfaatkan *core logic*-nya yang ditulis dalam **Rust** melalui *binding* ke berbagai bahasa dan lingkungan pemrograman.
+`validation_semantic` dirancang agar dapat digunakan lintas platform — Anda dapat memanfaatkan *core logic*-nya yang ditulis dalam **Rust** melalui *binding* ke berbagai bahasa dan lingkungan pemrograman.
 
 Saat ini, library ini dapat digunakan di dua platform utama:
 
@@ -129,10 +139,11 @@ export default function Example() {
     const models = wasmModule.getSupportedModelSelectors();
     const model = models["GEMINI_2_5_FLASH"];
 
-    const result = await wasmModule.validateTextJs(
+    const result = await wasmModule.validateInput(
       "PT Sinar Mentari",
       model,
-      "Nama Perusahaan"
+      "Nama Perusahaan",
+      api_key_gemini
     );
 
     console.log(result);
@@ -158,7 +169,7 @@ export default function Example() {
 
 ### 🧠 5️⃣ Contoh Validasi Banyak Input Sekaligus (Batch Validation)
 
-Kamu dapat melakukan **validasi beberapa input sekaligus** menggunakan `validateTextJs` dari modul WASM.
+Kamu dapat melakukan **validasi beberapa input sekaligus** menggunakan `validateInput` dari modul WASM.
 Setiap input diproses secara **asynchronous dan paralel** untuk efisiensi.
 
 ```tsx
@@ -207,10 +218,11 @@ export default function BatchValidationExample() {
     const validationPromises = Object.entries(inputs).map(
       async ([inputType, inputValue]) => {
         try {
-          const result = await wasmModule.validateTextJs(
+          const result = await wasmModule.validateInput(
             inputValue,
             modelSelectorInt,
-            inputType as InputType
+            inputType as InputType,
+            api_key_gemini
           );
           return { inputType, inputValue, result, error: null };
         } catch (err: any) {
@@ -249,15 +261,15 @@ export default function BatchValidationExample() {
 ```json
 {
   "email": {
-    "input": "john@example.com",
+    "input": "khairunsyah8935@gmail.com",
     "result": {
-      "valid": false,
-      "message": "Domain 'example.com' adalah domain contoh dan tidak valid untuk penggunaan nyata."
+      "valid": true,
+      "message": "Alamat email valid."
     },
     "error": null
   },
   "nama lengkap": {
-    "input": "John Doe",
+    "input": "Kemas Khairunsyah",
     "result": {
       "valid": true,
       "message": "Nama valid."
@@ -265,10 +277,58 @@ export default function BatchValidationExample() {
     "error": null
   },
   "alamat": {
-    "input": "Jl. Mawar No. 123",
+    "input": "JL. Estika, Paal Satu, Tanjung Pandan",
     "result": {
       "valid": true,
-      "message": "Alamat valid."
+      "message": "Alamat valid karena mengandung nama jalan (JL. Estika) dan nama kota (Tanjung Pandan) serta formatnya masuk akal."
+    },
+    "error": null
+  },
+  "nama produk": {
+    "input": "Produk Ga Jelas Nih",
+    "result": {
+      "valid": false,
+      "message": "Nama produk ini tidak jelas dan tidak memberikan informasi spesifik tentang produk yang sebenarnya, sehingga tidak realistis untuk pasar."
+    },
+    "error": null
+  },
+  "nama institusi": {
+    "input": "Organisasi",
+    "result": {
+      "valid": false,
+      "message": "Nama institusi tidak boleh hanya satu kata generik tanpa konteks institusional."
+    },
+    "error": null
+  },
+  "nama perusahaan": {
+    "input": "Lorem Ipsum Corp",
+    "result": {
+      "valid": false,
+      "message": "Nama perusahaan tidak valid karena merupakan teks placeholder yang umum digunakan dan tidak mewakili nama bisnis yang realistis."
+    },
+    "error": null
+  },
+  "nama lokasi": {
+    "input": "Alamat tidak diketahui",
+    "result": {
+      "valid": false,
+      "message": "Nama lokasi tidak boleh berupa teks acak atau tidak bermakna seperti 'Alamat tidak diketahui'."
+    },
+    "error": null
+  },
+  "judul": {
+    "input": "asdf qwerty",
+    "result": {
+      "valid": false,
+      "message": "Judul tidak valid karena terdiri dari kata-kata acak dan tidak memiliki makna yang jelas."
+    },
+    "error": null
+  },
+  "pekerjaan": {
+    "input": "12345",
+    "result": {
+      "valid": false,
+      "message": "Judul pekerjaan tidak boleh hanya berupa angka."
     },
     "error": null
   }
@@ -279,7 +339,7 @@ export default function BatchValidationExample() {
 
 ### 💡 Catatan
 
-* Fungsi `validateTextJs()` tetap digunakan seperti pada validasi tunggal.
+* Fungsi `validateInput()` tetap digunakan seperti pada validasi tunggal.
 * Perbedaan utamanya adalah semua input dikirim **sekaligus** menggunakan `Promise.all()` agar berjalan paralel.
 * Kamu bisa menyesuaikan daftar input sesuai kebutuhan form atau dataset kamu.
 
@@ -289,11 +349,13 @@ export default function BatchValidationExample() {
 
 ### 📘 5️⃣ Ringkasan Fungsi Utama
 
-| Fungsi                                    | Deskripsi                                            |
-| ----------------------------------------- | ---------------------------------------------------- |
-| `useWasm()`                               | *Hook* untuk memuat dan menginisialisasi modul WASM. |
-| `wasmModule.getSupportedModelSelectors()` | Mengambil daftar model yang tersedia.                |
-| `validateTextJs(text, model, type)`       | Melakukan validasi semantik teks.                    |
+
+
+| Fungsi                                                 | Deskripsi                                            |
+| ------------------------------------------------------ | ---------------------------------------------------- |
+| `useWasm()`                                            | *Hook* untuk memuat dan menginisialisasi modul WASM. |
+| `wasmModule.getSupportedModelSelectors()`              | Mengambil daftar model yang tersedia.                |
+| `validateInput(text, model, type, your_gemini_api_key)`| Melakukan validasi semantik teks.                    |
 
 ---
 
@@ -317,11 +379,6 @@ from validation_semantic import validate_input_py, SupportedModel
 
 Library ini memerlukan API Key dari Google AI Studio.
 
-```bash
-# Linux/macOS
-export GEMINI_API_KEY="API_KEY_ANDA"
-
-# Windows (Command Prompt)
 set GEMINI_API_KEY="API_KEY_ANDA"
 ```
 
@@ -428,50 +485,82 @@ if __name__ == "__main__":
 
 ```json
 {
-    "nama": {
-        "input": "John Doe",
-        "result": {
-            "valid": true,
-            "message": "Nama valid."
-        },
-        "error": null
+  "email": {
+    "input": "khairunsyah8935@gmail.com",
+    "result": {
+      "valid": true,
+      "message": "Alamat email valid."
     },
-    "email": {
-        "input": "john@example.com",
-        "result": {
-            "valid": false,
-            "message": "Alamat email menggunakan domain 'example.com' yang merupakan domain contoh dan tidak valid untuk penggunaan nyata. Silakan gunakan domain yang valid dan profesional."
-        },
-        "error": null
+    "error": null
+  },
+  "nama lengkap": {
+    "input": "Kemas Khairunsyah",
+    "result": {
+      "valid": true,
+      "message": "Nama valid."
     },
-    "alamat": {
-        "input": "error di sini",
-        "result": {
-            "valid": false,
-            "message": "Alamat tidak valid karena mengandung kata-kata yang tidak membentuk struktur alamat fisik yang realistis."
-        },
-        "error": null
-    }
+    "error": null
+  },
+  "alamat": {
+    "input": "JL. Estika, Paal Satu, Tanjung Pandan",
+    "result": {
+      "valid": true,
+      "message": "Alamat valid karena mengandung nama jalan (JL. Estika) dan nama kota (Tanjung Pandan) serta formatnya masuk akal."
+    },
+    "error": null
+  },
+  "nama produk": {
+    "input": "Produk Ga Jelas Nih",
+    "result": {
+      "valid": false,
+      "message": "Nama produk ini tidak jelas dan tidak memberikan informasi spesifik tentang produk yang sebenarnya, sehingga tidak realistis untuk pasar."
+    },
+    "error": null
+  },
+  "nama institusi": {
+    "input": "Organisasi",
+    "result": {
+      "valid": false,
+      "message": "Nama institusi tidak boleh hanya satu kata generik tanpa konteks institusional."
+    },
+    "error": null
+  },
+  "nama perusahaan": {
+    "input": "Lorem Ipsum Corp",
+    "result": {
+      "valid": false,
+      "message": "Nama perusahaan tidak valid karena merupakan teks placeholder yang umum digunakan dan tidak mewakili nama bisnis yang realistis."
+    },
+    "error": null
+  },
+  "nama lokasi": {
+    "input": "Alamat tidak diketahui",
+    "result": {
+      "valid": false,
+      "message": "Nama lokasi tidak boleh berupa teks acak atau tidak bermakna seperti 'Alamat tidak diketahui'."
+    },
+    "error": null
+  },
+  "judul": {
+    "input": "asdf qwerty",
+    "result": {
+      "valid": false,
+      "message": "Judul tidak valid karena terdiri dari kata-kata acak dan tidak memiliki makna yang jelas."
+    },
+    "error": null
+  },
+  "pekerjaan": {
+    "input": "12345",
+    "result": {
+      "valid": false,
+      "message": "Judul pekerjaan tidak boleh hanya berupa angka."
+    },
+    "error": null
+  }
 }
 
 ```
 
-### Hasil Output:
-
-```
-[nama]
- Input: John Doe
- ✅ Valid: Nama valid.
-
-[email]
- Input: john@example.com
- ⚠️  Invalid: Domain 'example.com' adalah domain contoh dan tidak valid untuk penggunaan nyata. Silakan gunakan domain yang  valid dan profesional.
-
-[alamat]
- Input: error di sini
- ⚠️  Invalid: Alamat tidak valid karena mengandung kata-kata yang tidak membentuk struktur alamat fisik yang realistis.     
-
-```
 
 ## 🧩 Jenis Input yang Dapat Divalidasi  
 
@@ -498,6 +587,32 @@ Berikut daftar lengkap jenis input yang dapat divalidasi beserta **fungsi atau k
 
 * Semua jenis input di atas **bersifat fleksibel** — sistem akan mengenali label yang mirip (misalnya `nama institusi` dan `lembaga` akan diproses sama).
 * Validasi tidak hanya berdasarkan format (regex), tetapi juga **semantik dan konteks makna** dengan bantuan model bahasa.
+
+---
+
+---
+
+## 📊 Permintaan Partisipasi Dan Umpan Balik Riset
+
+Pustaka **`Validasi Semantik`** dikembangkan sebagai bagian dari **proyek riset akademis** yang berfokus pada evaluasi performa dan kegunaan sistem validasi semantik berbasis AI.
+
+Jika Anda seorang **pengembang** yang menggunakan pustaka ini, umpan balik Anda sangat berharga untuk riset ini.
+Silakan coba gunakan pustaka ini dengan berbagai jenis masukan seperti **nama**, **alamat**, **judul**, **deskripsi**, atau **kolom teks**, dan bagikan pengalaman Anda.
+
+Anda dapat menyertakan:
+
+- Pendapat Anda tentang **kemudahan penggunaan** dan **pengalaman pengembang**
+- **kinerja** atau **akurasi** hasil validasi
+- **Masalah atau saran perbaikan** yang ingin Anda laporkan
+- (Opsional) **Contoh atau bukti** tentang bagaimana Anda mengintegrasikan pustaka ini ke dalam proyek Anda
+
+Kontribusi Anda akan secara langsung mendukung evaluasi dan pengembangan lebih lanjut dari proyek riset ini.
+
+📩 Anda dapat memberikan masukan dengan **membuka Masalah di repositori GitHub resmi**:
+👉 [GitHub Issues for PyPi users](https://github.com/herros27/validation_semantic/issues)
+👉 [GitHub Issues for NPM users](https://github.com/herros27/React-Library-Semantic-Validation/issues) 
+
+Terima kasih banyak telah meluangkan waktu untuk berpartisipasi dan berkontribusi dalam penelitian ini. 🙏
 
 ---
 
