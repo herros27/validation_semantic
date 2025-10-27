@@ -1,4 +1,3 @@
----
 
 # 🤖 Library `Semantic Validation` Dengan Gemini API
 
