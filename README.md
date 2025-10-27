@@ -4,7 +4,7 @@
 
 ![GitHub last commit](https://img.shields.io/github/last-commit/herros27/validation_semantic)
 ![GitHub stars](https://img.shields.io/github/stars/herros27/validation_semantic?style=social)
-![TestPyPI](https://img.shields.io/badge/TestPyPI-validation--semantic-blue?logo=pypi)
+![PyPI](https://img.shields.io/badge/PyPI-validation--semantic-blue?logo=pypi)
 ![Rust Build Status](https://github.com/herros27/validation_semantic/actions/workflows/release.yml/badge.svg)
 ![npm version](https://img.shields.io/npm/v/validation_semantic?logo=npm)
 ![npm downloads](https://img.shields.io/npm/dt/validation_semantic?logo=npm)
@@ -27,22 +27,15 @@ Sebagai contoh, library ini dapat membedakan apakah sebuah input lebih sesuai di
 
 ---
 
----
-
-## 🧠 **Catatan Penelitian:**
-
-> Library ini dikembangkan sebagai bagian dari proyek penelitian akademik.
-> Pengembang didorong untuk mencoba dan memberikan umpan balik terkait kinerja serta kemudahan penggunaannya.
-> Untuk informasi lebih lanjut, lihat bagian [Partisipasi Penelitian & Permintaan Umpan Balik](#-partisipasi-penelitian--permintaan-umpan-balik) di bawah ini.
-
----
 ### 🌍 Dukungan Multiplatform
+
 ---
+
 Kelebihan utama `validation_semantic` terletak pada desain modular dan interoperabilitas lintas platform melalui **bindings**:
 
-* 🧩 **WebAssembly (WASM)** — memungkinkan integrasi di *frontend* seperti React atau Vue dengan performa tinggi langsung di browser.
-* 🐍 **Python (via PyO3 / Maturin)** — ideal untuk *backend services*, *data validation pipelines*, atau *machine learning preprocessing*.
-* 🔧 Dukungan untuk *binding* lain seperti Kotlin sedang dalam tahap pengembangan.
+- 🧩 **WebAssembly (WASM)** — memungkinkan integrasi di _frontend_ seperti React atau Vue dengan performa tinggi langsung di browser.
+- 🐍 **Python (via PyO3 / Maturin)** — ideal untuk _backend services_, _data validation pipelines_, atau _machine learning preprocessing_.
+- 🔧 Dukungan untuk _binding_ lain seperti Kotlin sedang dalam tahap pengembangan.
 
 Dengan kombinasi **kecepatan Rust** dan **kecerdasan Gemini**, `validation_semantic` menghadirkan sistem validasi modern yang **kontekstual, efisien, dan mudah diintegrasikan** ke berbagai proyek.
 
@@ -54,16 +47,18 @@ Dengan kombinasi **kecepatan Rust** dan **kecerdasan Gemini**, `validation_seman
 2. [🚀 Memulai](#-memulai)
 3. [⚛️ Menggunakan Library di React (Vite)](#️-menggunakan-library-di-react-vite)
 
-   * [🧩 Instalasi Library dan Plugin Pendukung](#-1️⃣-instalasi-library-dan-plugin-pendukung)
-   * [⚙️ Konfigurasi Vite](#️-2️⃣-konfigurasi-vite)
-   * [🚀 Gunakan Modul WASM di React](#-3️⃣-gunakan-modul-wasm-di-react)
-   * [🧾 Contoh Output](#-4️⃣-contoh-output)
-   * [📘 Ringkasan Fungsi Utama](#-5️⃣-ringkasan-fungsi-utama)
+   - [🧩 Instalasi Library dan Plugin Pendukung](#-1️⃣-instalasi-library-dan-plugin-pendukung)
+   - [⚙️ Konfigurasi Vite](#️-2️⃣-konfigurasi-vite)
+   - [🚀 Gunakan Modul WASM di React](#-3️⃣-gunakan-modul-wasm-di-react)
+   - [🧾 Contoh Output](#-4️⃣-contoh-output)
+   - [📘 Ringkasan Fungsi Utama](#-5️⃣-ringkasan-fungsi-utama)
+
 4. [🐍 Instalasi untuk Python](#-python)
 
-   * [🔑 Konfigurasi API Key](#-konfigurasi)
-   * [🚀 Cara Penggunaan untuk Python](#-cara-penggunaan-untuk-python)
-   * [📦 Validasi Banyak Input Sekaligus (Batch Validation)](#-validasi-banyak-input-sekaligus-batch-validation-dengan-python)
+   - [🔑 Konfigurasi API Key](#-konfigurasi)
+   - [🚀 Cara Penggunaan untuk Python](#-cara-penggunaan-untuk-python)
+   - [📦 Validasi Banyak Input Sekaligus (Batch Validation)](#-validasi-banyak-input-sekaligus-batch-validation-dengan-python)
+
 5. [🧩 Jenis Input yang Dapat Divalidasi](#️-jenis-input-yang-dapat-divalidasi)
 6. [🤝 Kontribusi](#-kontribusi)
 7. [Research Participation & Feedback](#-research-participation--feedback-request)
@@ -73,23 +68,23 @@ Dengan kombinasi **kecepatan Rust** dan **kecerdasan Gemini**, `validation_seman
 
 ## 🌟 Fitur Utama
 
-* **Core Logic dalam Rust:** Mesin validasi semantik yang cepat, aman, dan efisien, dibangun di atas fondasi Rust.
-* **Validasi Berbasis Aturan:** Terapkan seperangkat aturan yang dapat dikonfigurasi untuk memeriksa integritas dan konsistensi semantik data Anda.
-* **Deteksi Anomali:** Mudah mengidentifikasi pola atau nilai data yang tidak sesuai dengan ekspektasi semantik Anda.
-* **API yang Fleksibel:** Dirancang untuk mudah diekspos melalui *bindings* ke berbagai bahasa dan lingkungan pemrograman.
-* **Laporan Detail:** Dapatkan laporan validasi yang jelas dan informatif.
-* **Siap untuk *Cross-Platform*:** Digunakan di server, desktop, maupun browser.
+- **Core Logic dalam Rust:** Mesin validasi semantik yang cepat, aman, dan efisien, dibangun di atas fondasi Rust.
+- **Validasi Berbasis Aturan:** Terapkan seperangkat aturan yang dapat dikonfigurasi untuk memeriksa integritas dan konsistensi semantik data Anda.
+- **Deteksi Anomali:** Mudah mengidentifikasi pola atau nilai data yang tidak sesuai dengan ekspektasi semantik Anda.
+- **API yang Fleksibel:** Dirancang untuk mudah diekspos melalui _bindings_ ke berbagai bahasa dan lingkungan pemrograman.
+- **Laporan Detail:** Dapatkan laporan validasi yang jelas dan informatif.
+- **Siap untuk _Cross-Platform_:** Digunakan di server, desktop, maupun browser.
 
 ---
 
 ## 🚀 Memulai
 
-`validation_semantic` dirancang agar dapat digunakan lintas platform — Anda dapat memanfaatkan *core logic*-nya yang ditulis dalam **Rust** melalui *binding* ke berbagai bahasa dan lingkungan pemrograman.
+`validation_semantic` dirancang agar dapat digunakan lintas platform — Anda dapat memanfaatkan _core logic_-nya yang ditulis dalam **Rust** melalui _binding_ ke berbagai bahasa dan lingkungan pemrograman.
 
 Saat ini, library ini dapat digunakan di dua platform utama:
 
-* **Frontend:** React (Vite) menggunakan WebAssembly (WASM)
-* **Backend / Desktop:** Python (via PyO3 / Maturin)
+- **Frontend:** React (Vite) menggunakan WebAssembly (WASM)
+- **Backend / Desktop:** Python (via PyO3 / Maturin)
 
 ---
 
@@ -117,21 +112,22 @@ npm install vite-plugin-wasm vite-plugin-top-level-await
 ### ⚙️ 2️⃣ Konfigurasi Vite
 
 ```ts
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
-import wasm from "vite-plugin-wasm"
-import topLevelAwait from "vite-plugin-top-level-await"
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import wasm from "vite-plugin-wasm";
+import topLevelAwait from "vite-plugin-top-level-await";
 
 export default defineConfig({
   plugins: [
     react(),
-    wasm(),                 // Aktifkan dukungan untuk WebAssembly
-    topLevelAwait(),        // Izinkan penggunaan "await" di top-level
+    wasm(), // Aktifkan dukungan untuk WebAssembly
+    topLevelAwait(), // Izinkan penggunaan "await" di top-level
     tailwindcss(),
   ],
-})
+});
 ```
+
 ## 🔑 Konfigurasi
 
 Library ini memerlukan API Key dari Google AI Studio.
@@ -140,6 +136,7 @@ Library ini memerlukan API Key dari Google AI Studio.
 # Buat file .env dan buat envirovment variabel seperti di bawah:
 VITE_GEMINI_API_KEY="API_KEY_ANDA"
 ```
+
 ---
 
 ### 🚀 3️⃣ Gunakan Modul WASM di React
@@ -336,7 +333,6 @@ export default function BatchValidationExample() {
     </div>
   );
 }
-
 ```
 
 ---
@@ -378,16 +374,15 @@ export default function BatchValidationExample() {
     "error": null
   }
 }
-
 ```
 
 ---
 
 ### 💡 Catatan
 
-* Fungsi `validateInput()` tetap digunakan seperti pada validasi tunggal.
-* Perbedaan utamanya adalah semua input dikirim **sekaligus** menggunakan `Promise.all()` agar berjalan paralel.
-* Kamu bisa menyesuaikan daftar input sesuai kebutuhan form atau dataset kamu.
+- Fungsi `validateInput()` tetap digunakan seperti pada validasi tunggal.
+- Perbedaan utamanya adalah semua input dikirim **sekaligus** menggunakan `Promise.all()` agar berjalan paralel.
+- Kamu bisa menyesuaikan daftar input sesuai kebutuhan form atau dataset kamu.
 
 ---
 
@@ -397,18 +392,18 @@ export default function BatchValidationExample() {
 
 | Fungsi                                           | Deskripsi                                            |
 | ------------------------------------------------ | ---------------------------------------------------- |
-| `useWasm()`                                      | *Hook* untuk memuat dan menginisialisasi modul WASM. |
+| `useWasm()`                                      | _Hook_ untuk memuat dan menginisialisasi modul WASM. |
 | `wasmModule.getSupportedModelSelectors()`        | Mengambil daftar model yang tersedia.                |
-| `validateInput(text, model, type,youur_api_key)` | Melakukan validasi semantik teks.                    |
+| `validateInput(text, model, type, your_api_key)` | Melakukan validasi semantik teks.                    |
 
 ---
 
 ## 🐍 **Python**
 
-Untuk Python, Anda dapat menginstal library ini langsung dari **TestPyPI** menggunakan `pip`.
+Untuk Python, Anda dapat menginstal library ini langsung dari **PyPI** menggunakan `pip`.
 
 ```bash
-pip install -i https://test.pypi.org/simple/ validation-semantic
+pip install -i validation-semantic
 ```
 
 Setelah terinstal, Anda bisa langsung mengimpor dan menggunakan fungsi `validate_input_py` di kode Python Anda:
@@ -454,16 +449,14 @@ print(json.dumps(result, indent=4, ensure_ascii=False))
 
 ```json
 {
-    "valid": false,
-    "message": "Input 'PT Mencari Cinta Sejati' adalah nama perusahaan yang tidak valid dan umum di Indonesia."
+  "valid": false,
+  "message": "Input 'PT Mencari Cinta Sejati' adalah nama perusahaan yang tidak valid dan umum di Indonesia."
 }
 ```
 
 ---
 
-
 ## 📦 Validasi Banyak Input Sekaligus (Batch Validation) dengan python
-
 
 ### Kode Lengkap:
 
@@ -480,7 +473,7 @@ class BatchValidationWorker:
                 continue  # lewati input kosong
 
             try:
-                
+
                 result = validate_input_py(text.strip(), self.model, label) #validate_input_py merupakan fungsi dari library
                 results[label] = {
                     "input": text.strip(),
@@ -524,9 +517,10 @@ if __name__ == "__main__":
                 print(" ✅ Valid:", info["result"]["message"])
             else:
                 print(" ⚠️  Invalid:", info["result"]["message"])
-          
+
         print()
 ```
+
 ### JSON Output:
 
 ```json
@@ -564,16 +558,14 @@ if __name__ == "__main__":
     "error": null
   }
 }
-
 ```
 
-
-## 🧩 Jenis Input yang Dapat Divalidasi  
+## 🧩 Jenis Input yang Dapat Divalidasi
 
 Library `validation_semantic` mendukung berbagai jenis input teks yang umum digunakan dalam aplikasi bisnis, akademik, maupun personal.
 Berikut daftar lengkap jenis input yang dapat divalidasi beserta **fungsi atau konteks penggunaannya**:
 
-| 🏷️ **Jenis Input**                                                           | 🧠 **Deskripsi Validasi**                                                                                  | 💡 **Contoh Input**                         |
+| 🏷️ **Jenis Input**                                                            | 🧠 **Deskripsi Validasi**                                                                                  | 💡 **Contoh Input**                         |
 | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
 | `alamat email`, `email`                                                       | Memvalidasi format dan kesahihan alamat email.                                                             | `user@example.com`                          |
 | `nama institusi`, `nama lembaga`, `institusi`, `lembaga`                      | Mengecek kesesuaian nama lembaga atau institusi resmi.                                                     | `Universitas Indonesia`, `LIPI`             |
@@ -591,8 +583,8 @@ Berikut daftar lengkap jenis input yang dapat divalidasi beserta **fungsi atau k
 
 🧠 **Catatan:**
 
-* Semua jenis input di atas **bersifat fleksibel** — sistem akan mengenali label yang mirip (misalnya `nama institusi` dan `lembaga` akan diproses sama).
-* Validasi tidak hanya berdasarkan format (regex), tetapi juga **semantik dan konteks makna** dengan bantuan model bahasa.
+- Semua jenis input di atas **bersifat fleksibel** — sistem akan mengenali label yang mirip (misalnya `nama institusi` dan `lembaga` akan diproses sama).
+- Validasi tidak hanya berdasarkan format (regex), tetapi juga **semantik dan konteks makna** dengan bantuan model bahasa.
 
 ---
 
@@ -616,7 +608,7 @@ Kontribusi Anda akan secara langsung mendukung evaluasi dan pengembangan lebih l
 
 📩 Anda dapat memberikan masukan dengan **membuka Masalah di repositori GitHub resmi**:
 👉 [GitHub Issues for PyPi users](https://github.com/herros27/validation_semantic/issues)
-👉 [GitHub Issues for NPM users](https://github.com/herros27/React-Library-Semantic-Validation/issues) 
+👉 [GitHub Issues for NPM users](https://github.com/herros27/React-Library-Semantic-Validation/issues)
 
 Terima kasih banyak telah meluangkan waktu untuk berpartisipasi dan berkontribusi dalam penelitian ini. 🙏
 
@@ -627,10 +619,9 @@ Terima kasih banyak telah meluangkan waktu untuk berpartisipasi dan berkontribus
 ## 🤝 Kontribusi
 
 Kontribusi sangat diterima!
-Silakan buat *issue* atau *pull request* di [GitHub Repository](https://github.com/herros27/validation_semantic).
+Silakan buat _issue_ atau _pull request_ di [GitHub Repository](https://github.com/herros27/validation_semantic).
 
 ---
-
 
 ## 📄 Lisensi
 
