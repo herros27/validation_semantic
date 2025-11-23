@@ -5,7 +5,7 @@
 ![PyPI](https://img.shields.io/pypi/v/validation-semantic?logo=pypi)
 ![npm version](https://img.shields.io/npm/v/validation_semantic?logo=npm)
 ![npm downloads](https://img.shields.io/npm/dt/validation_semantic?logo=npm)
-![PyPI downloads](https://static.pepy.tech/badge/validation-semantic)
+![PyPI downloads](https://static.pepy.tech/badge/validation-semantic?fallback=https://img.shields.io/badge/downloads-pending-lightgrey)
 ![status: experimental](https://img.shields.io/badge/status-experimental-orange)
 
 `validation_semantic` adalah _library_ **validasi semantik** yang cepat, aman, dan cerdas — dibangun sepenuhnya dengan **Rust** dan didukung oleh **model Gemini dari Google AI Studio**.
@@ -14,6 +14,10 @@ Library ini tidak hanya memeriksa validitas data secara **sintaksis** (misalnya 
 
 Berbeda dari validator konvensional, `validation_semantic` berfokus pada **pemahaman arti dan tujuan data**, bukan sekadar pola teks.
 Sebagai contoh, library ini dapat membedakan apakah sebuah input lebih sesuai dikategorikan sebagai nama institusi, alamat email, deskripsi, atau teks naratif — menghasilkan validasi yang jauh lebih presisi dan bermakna.
+
+
+💡 Untuk versi **Python**, library ini dapat digunakan di **lingkungan mana pun** (baik server-side maupun client-side).
+Sedangkan untuk versi **JavaScript / TypeScript**, library ini dirancang khusus untuk berjalan di **sisi front-end (client-side)** — ideal untuk aplikasi web dengan React atau Next yang memerlukan validasi cerdas langsung di browser.
 
 > ⚠️ **Catatan:** Library ini **masih dalam tahap eksperimental**.
 > Fitur, API, dan hasil validasi dapat berubah pada versi berikutnya seiring dengan pengujian dan peningkatan performa.
