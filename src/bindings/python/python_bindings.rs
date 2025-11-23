@@ -46,8 +46,8 @@ impl PySupportedModel {
 fn validate_input_py(
     py: Python,
     text: String,
-    model_selector: &PySupportedModel,
-    input_type: String,
+    model: &PySupportedModel,
+    label: String,
 ) -> PyResult<PyObject> {
     let config = match &*API_CONFIG {
         Ok(cfg) => cfg,
@@ -58,8 +58,8 @@ fn validate_input_py(
         }
     };
 
-    let model_name = model_selector.variant.as_str();
-    match validate_input_with_llm_sync(&text, model_name, &input_type, config) {
+    let model_name = model.variant.as_str();
+    match validate_input_with_llm_sync(&text, model_name, &label, config) {
         Ok(validation_response) => {
             let dict = PyDict::new(py);
             dict.set_item("valid", validation_response.valid)?;

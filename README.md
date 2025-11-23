@@ -1,4 +1,3 @@
-
 # 🤖 Library `Semantic Validation` Dengan Gemini API
 
 ![GitHub last commit](https://img.shields.io/github/last-commit/herros27/validation_semantic)
@@ -9,10 +8,9 @@
 ![PyPI downloads](https://static.pepy.tech/badge/validation-semantic)
 ![status: experimental](https://img.shields.io/badge/status-experimental-orange)
 
+`validation_semantic` adalah _library_ **validasi semantik** yang cepat, aman, dan cerdas — dibangun sepenuhnya dengan **Rust** dan didukung oleh **model Gemini dari Google AI Studio**.
 
-`validation_semantic` adalah *library* **validasi semantik** yang cepat, aman, dan cerdas — dibangun sepenuhnya dengan **Rust** dan didukung oleh **model Gemini dari Google AI Studio**.
-
-Library ini tidak hanya memeriksa validitas data secara **sintaksis** (misalnya format email atau nomor telepon), tetapi juga melakukan **analisis semantik** untuk memahami *makna dan konteks* dari input pengguna. Dengan integrasi **Gemini API**, proses validasi menjadi lebih kontekstual dan adaptif terhadap berbagai jenis data maupun bahasa.
+Library ini tidak hanya memeriksa validitas data secara **sintaksis** (misalnya format email atau nomor telepon), tetapi juga melakukan **analisis semantik** untuk memahami _makna dan konteks_ dari input pengguna. Dengan integrasi **Gemini API**, proses validasi menjadi lebih kontekstual dan adaptif terhadap berbagai jenis data maupun bahasa.
 
 Berbeda dari validator konvensional, `validation_semantic` berfokus pada **pemahaman arti dan tujuan data**, bukan sekadar pola teks.
 Sebagai contoh, library ini dapat membedakan apakah sebuah input lebih sesuai dikategorikan sebagai nama institusi, alamat email, deskripsi, atau teks naratif — menghasilkan validasi yang jauh lebih presisi dan bermakna.
@@ -20,6 +18,7 @@ Sebagai contoh, library ini dapat membedakan apakah sebuah input lebih sesuai di
 > ⚠️ **Catatan:** Library ini **masih dalam tahap eksperimental**.
 > Fitur, API, dan hasil validasi dapat berubah pada versi berikutnya seiring dengan pengujian dan peningkatan performa.
 > 🧩 **Masukan dari pengembang sangat dibutuhkan** — saran, laporan bug, dan kontribusi Anda sangat membantu dalam mengembangkan dan menstabilkan library ini.
+
 ---
 
 ## 🧠 **Catatan Penelitian:**
@@ -66,6 +65,7 @@ Dengan kombinasi **kecepatan Rust** dan **kecerdasan Gemini**, `validation_seman
 6. [🤝 Kontribusi](#-kontribusi)
 7. [Research Participation & Feedback](#-research-participation--feedback-request)
 8. [📄 Lisensi](#-lisensi)
+9. [Changelog](#changelog)
 
 ---
 
@@ -139,6 +139,58 @@ export default defineConfig({
 });
 ```
 
+---
+
+### **Pastikan seluruh aplikasi dibungkus oleh WasmProvider di `main.tsx`**
+
+```ts
+// main.tsx
+import { WasmProvider } from "validation_semantic";
+
+createRoot(document.getElementById("root")!).render(
+  <WasmProvider>
+    <StrictMode>
+      <App />
+    </StrictMode>
+  </WasmProvider>
+);
+```
+
+---
+
+### **Wajib: Konfigurasi Wasm Module Dengan API Key dari Google AI Studio di `app.tsx` (atau di dalam komponen yang berada di dalam WasmProvider)**
+
+```ts
+// app.tsx
+export default function App() {
+  const { wasmReady, wasmModule } = useWasm();
+
+  useEffect(() => {
+    if (!wasmReady || !wasmModule) return;
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    wasmModule.configure(apiKey);
+  }, [wasmReady, wasmModule]);
+
+  return (
+    <Router>
+      <Routes>
+        <Route path='/' element={<FormTestPage />} />
+        <Route path='/developer' element={<FormDeveloperPage />} />
+      </Routes>
+    </Router>
+  );
+}
+```
+
+---
+
+### 📌 Catatan Penting
+
+> `wasmModule.configure(apiKey)` **harus dipanggil di dalam komponen yang dirender di bawah `<WasmProvider>`**.
+> Jika tidak, modul WebAssembly tidak akan terinisialisasi dengan benar dan fitur validasi akan gagal berfungsi.
+
+---
+
 ## 🔑 Konfigurasi
 
 Library ini memerlukan API Key dari Google AI Studio.
@@ -164,14 +216,12 @@ export default function Example() {
       return;
     }
 
-    const models = wasmModule.getSupportedModelSelectors();
-    const model = models["GEMINI_2_5_FLASH"];
+    const model = wasmModule.getSupportedModels().GeminiFlashLite;
 
     const result = await wasmModule.validateInput(
       "PT Sinar Mentari",
       model,
-      "Nama Perusahaan",
-      import.meta.env.VITE_GEMINI_API_KEY
+      "Nama Perusahaan"
     );
 
     console.log(result);
@@ -219,7 +269,6 @@ type InputType =
 
 export default function BatchValidationExample() {
   const { wasmReady, wasmModule, error: wasmError } = useWasm();
-  const modelToUseKey = "GEMINI_FLASH"; //GEMINI_FLASH_LITE, GEMINI_FLASH_LATEST, GEMMA
 
   const [formData, setFormData] = useState<Record<InputType, string>>({
     email: "",
@@ -251,14 +300,8 @@ export default function BatchValidationExample() {
       alert("WASM module is not ready.");
       return;
     }
-
-    const supportedModels = wasmModule.getSupportedModelSelectors();
-    const modelSelectorInt = supportedModels[modelToUseKey];
-
-    if (typeof modelSelectorInt === "undefined") {
-      alert(`Model ${modelToUseKey} not found.`);
-      return;
-    }
+    // You can use other model like GeminiFlash, GeminiFlashLatest, Gemma
+    const model = wasmModule.getSupportedModels().GeminiFlashLite;
 
     setLoading(true);
     try {
@@ -268,9 +311,8 @@ export default function BatchValidationExample() {
           try {
             const result = await wasmModule.validateInput(
               inputValue,
-              modelSelectorInt,
-              inputType as InputType,
-              import.meta.env.VITE_GEMINI_API_KEY
+              model,
+              inputType as InputType
             );
             return { inputType, inputValue, result, error: null };
           } catch (err: any) {
@@ -401,11 +443,12 @@ export default function BatchValidationExample() {
 
 ### 📘 5️⃣ Ringkasan Fungsi Utama
 
-| Fungsi                                           | Deskripsi                                            |
-| ------------------------------------------------ | ---------------------------------------------------- |
-| `useWasm()`                                      | _Hook_ untuk memuat dan menginisialisasi modul WASM. |
-| `wasmModule.getSupportedModelSelectors()`        | Mengambil daftar model yang tersedia.                |
-| `validateInput(text, model, type, your_api_key)` | Melakukan validasi semantik teks.                    |
+| Fungsi                             | Deskripsi                                                                                      |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `useWasm()`                        | React Hook untuk memuat dan menginisialisasi modul WASM.                                       |
+| `wasmModule.getSupportedModels()`  | Mengambil daftar model Gemini yang didukung.                                                   |
+| `validateInput(text, model, type)` | Menjalankan validasi semantik pada teks yang diberikan.                                        |
+| `wasmModule.configure(apiKey)`     | Wajib dipanggil sekali untuk menetapkan API Key Gemini sebelum fitur validasi dapat digunakan. |
 
 ---
 
@@ -639,3 +682,12 @@ Silakan buat _issue_ atau _pull request_ di [GitHub Repository](https://github.c
 Proyek ini dilisensikan di bawah [MIT License](https://opensource.org/licenses/MIT).
 
 ---
+
+## Changelog
+
+# 1.1.3 - 2025-11-22
+
+- Pemindahan konfigurasi API Key keluar dari `validateInput()` → sekarang wajib memanggil `wasmModule.configure(apiKey)` sekali setelah Wasm module siap pada React.
+- Refactor: Meningkatkan kenyamanan penggunaan API Python serta konsistensi penamaan.
+- Memperbarui daftar model yang didukung untuk memasukkan model Gemini terbaru.
+- Meningkatkan dokumentasi dan contoh penggunaan pada README.

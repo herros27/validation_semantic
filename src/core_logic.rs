@@ -5,7 +5,7 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::env;
-
+use std::collections::HashMap;
 // Import reqwest clients untuk sinkron dan asinkron
 #[cfg(feature = "native_ffi_setup")]
 use reqwest::blocking::Client as BlockingClient;
@@ -19,6 +19,14 @@ pub struct ValidationResponse {
     pub message: String,
 }
 
+#[derive(Deserialize)]
+pub struct BatchInput {
+    pub field: String,
+    pub value: String,
+    pub input_type: String,
+}
+
+
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SupportedModel {
@@ -31,9 +39,9 @@ impl SupportedModel {
     pub fn as_str(&self) -> &'static str {
         match self {
             SupportedModel::GeminiFlash => "gemini-2.5-flash",
-            SupportedModel::GeminiFlashLite => "gemini-2.5-flash-lite-preview-06-17",
-            SupportedModel::GeminiFlashLatest => "gemini-2.5-flash-preview-09-2025",
-            SupportedModel::Gemma => "gemma-3n-e2b-it",
+            SupportedModel::GeminiFlashLite => "gemini-flash-lite-latest",
+            SupportedModel::GeminiFlashLatest => "gemini-flash-latest",
+            SupportedModel::Gemma => "gemma-3-27b-it",
         }
     }
     pub fn from_int(value: i32) -> Option<Self> {
@@ -228,6 +236,54 @@ pub async fn validate_input_with_llm_async( //ubah biar parameter nya API_KEY ge
         Err(error_message.into())
     }
 }
+
+pub async fn validate_batch_with_llm_one_hit_async(
+    items: Vec<BatchInput>,
+    model_name: &str,
+    api_key: &str,
+) -> Result<HashMap<String, ValidationResponse>, Box<dyn std::error::Error + Send + Sync>> {
+
+    let mut prompt_body = String::from(
+        "Validasi semua input berikut sesuai tipe masing-masing.\n\n\
+        Format jawaban akhir (JSON valid):\n\
+        {\n  \"field\": {\"valid\": true/false, \"message\": \"...\"}\n}\n\n\
+        Daftar input:\n\n"
+    );
+
+    for item in items.iter() {
+        let inner_prompt = format_prompt(&item.value, &item.input_type);
+
+        prompt_body.push_str(&format!(
+            "[FIELD: {}]\n{}\n\n",
+            item.field,
+            inner_prompt
+        ));
+    }
+
+    let body = serde_json::json!({
+        "contents": [
+            { "parts": [ { "text": prompt_body } ] }
+        ]
+    });
+
+    let url = format!(
+        "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}",
+        model_name,
+        api_key
+    );
+
+    let client = AsyncClient::new();
+    let response = client.post(&url).json(&body).send().await?;
+    let text = response.text().await?;
+
+    let gemini_response: GeminiApiResponse = serde_json::from_str(&text)?;
+    let json_text = extract_text_from_gemini(gemini_response)?;
+
+    let result_map: HashMap<String, ValidationResponse> = serde_json::from_str(&json_text)?;
+
+    Ok(result_map)
+}
+
 
 fn clean_json_markdown(raw: &str) -> &str {
     raw.trim()
@@ -1100,5 +1156,23 @@ pub fn parse_gemini_response(gemini_api_response: GeminiApiResponse,
     })?;
 
     Ok(parsed)
+}
+
+pub fn extract_text_from_gemini(
+    gemini_api_response: GeminiApiResponse,
+) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
+
+    // Ambil teks dari candidate pertama → part pertama
+    let model_generated_text_str: String = gemini_api_response
+        .candidates
+        .get(0)
+        .and_then(|candidate| candidate.content.parts.get(0))
+        .map(|part| part.text.clone())
+        .ok_or_else(|| "Gagal mengekstrak teks dari respons LLM.".to_string())?;
+
+    // Hapus block markdown seperti ```json ... ```
+    let cleaned = clean_json_markdown(&model_generated_text_str);
+
+    Ok(cleaned.to_string())
 }
 
