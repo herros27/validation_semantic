@@ -15,7 +15,6 @@ Library ini tidak hanya memeriksa validitas data secara **sintaksis** (misalnya 
 Berbeda dari validator konvensional, `validation_semantic` berfokus pada **pemahaman arti dan tujuan data**, bukan sekadar pola teks.
 Sebagai contoh, library ini dapat membedakan apakah sebuah input lebih sesuai dikategorikan sebagai nama institusi, alamat email, deskripsi, atau teks naratif — menghasilkan validasi yang jauh lebih presisi dan bermakna.
 
-
 💡 Untuk versi **Python**, library ini dapat digunakan di **lingkungan mana pun** (baik server-side maupun client-side).
 Sedangkan untuk versi **JavaScript / TypeScript**, library ini dirancang khusus untuk berjalan di **sisi front-end (client-side)** — ideal untuk aplikasi web dengan React atau Next yang memerlukan validasi cerdas langsung di browser.
 
@@ -623,19 +622,29 @@ if __name__ == "__main__":
 Library `validation_semantic` mendukung berbagai jenis input teks yang umum digunakan dalam aplikasi bisnis, akademik, maupun personal.
 Berikut daftar lengkap jenis input yang dapat divalidasi beserta **fungsi atau konteks penggunaannya**:
 
-| 🏷️ **Jenis Input**                                                            | 🧠 **Deskripsi Validasi**                                                                                  | 💡 **Contoh Input**                         |
-| ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| `alamat email`, `email`                                                       | Memvalidasi format dan kesahihan alamat email.                                                             | `user@example.com`                          |
-| `nama institusi`, `nama lembaga`, `institusi`, `lembaga`                      | Mengecek kesesuaian nama lembaga atau institusi resmi.                                                     | `Universitas Indonesia`, `LIPI`             |
-| `nama perusahaan`                                                             | Memastikan nama perusahaan valid dan umum digunakan.                                                       | `PT Sinar Mentari`                          |
-| `nama produk`                                                                 | Memeriksa nama produk atau merek agar sesuai konteks industri.                                             | `Indomie`, `Aqua`, `iPhone 15`              |
-| `nama lokasi`, `lokasi`, `tempat`                                             | Mengevaluasi apakah teks merupakan nama lokasi atau wilayah yang sah.                                      | `Jakarta Selatan`, `Bandung`, `Paris`       |
-| `nama lengkap`, `nama`                                                        | Validasi nama lengkap pengguna sesuai pola umum nama orang.                                                | `Budi Santoso`, `Kemas Khairunsyah`         |
-| `judul`                                                                       | Mengecek apakah teks sesuai untuk digunakan sebagai judul dokumen, artikel, atau karya ilmiah.             | `Analisis Dampak Teknologi AI di Indonesia` |
-| `pekerjaan`                                                                   | Memastikan teks merupakan jabatan atau profesi yang dikenal umum.                                          | `Software Engineer`, `Dokter`, `Guru`       |
-| `tag`                                                                         | Validasi tag pendek yang biasanya digunakan untuk pengelompokan atau kategorisasi.                         | `AI`, `Teknologi`, `Pendidikan`             |
-| `alamat`                                                                      | Memeriksa struktur alamat agar sesuai dengan format umum.                                                  | `Jl. Merdeka No.10, Bandung`                |
-| `text area`, `teks area`, `konten`, `deskripsi`, `blog`, `cerita`, `komentar` | Validasi teks panjang (paragraf) untuk memastikan isi bermakna, tidak kosong, dan sesuai konteks semantik. | `Saya sangat puas dengan produk ini!`       |
+| Kategori Validasi      | Deskripsi                                                                     | Label / Kata Kunci yang Didukung                                                                           |
+| :--------------------- | :---------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------- |
+| **📧 Email**           | Memvalidasi format email dan mengecek domain dummy (misal: example.com).      | `"email"`, `"alamat email"`, `"email address"`, `"mail"`                                                   |
+| **👤 Nama Orang**      | Memvalidasi apakah input terlihat seperti nama manusia asli.                  | `"name"`, `"nama"`, `"full name"`, `"nama lengkap"`, `"nickname"`, `"first name"`, `"last name"`           |
+| **🆔 Username**        | Memvalidasi nama pengguna yang unik (tanpa spasi, konten pantas).                      | `"username"`, `"nama pengguna"`, `"handle"`, `"user id"`, `"account name"`, `"id pengguna"`                |
+| **🏢 Perusahaan**      | Memvalidasi nama entitas bisnis (PT, CV, Inc, Corp, dll).                     | `"company"`, `"perusahaan"`, `"business"`, `"corporate"`, `"company name"`, `"nama perusahaan"`            |
+| **🏛️ Institusi**       | Memvalidasi organisasi, lembaga, atau yayasan.                                | `"institution"`, `"institusi"`, `"organization"`, `"lembaga"`, `"agency"`, `"institute"`                   |
+| **📦 Produk**          | Memvalidasi barang fisik, merchandise, atau item.                             | `"product"`, `"produk"`, `"item"`, `"barang"`, `"merchandise"`, `"goods"`, `"nama barang"`                 |
+| **💼 Pekerjaan**       | Memvalidasi judul pekerjaan, peran, atau status profesi.                      | `"job"`, `"pekerjaan"`, `"profession"`, `"profesi"`, `"role"`, `"career"`, `"karir"`, `"position"`         |
+| **📍 Lokasi**          | Memvalidasi venue, tempat umum, atau area.                                    | `"location"`, `"lokasi"`, `"place"`, `"tempat"`, `"venue"`, `"area"`, `"nama lokasi"`                      |
+| **🏠 Alamat Fisik**    | Memvalidasi alamat jalan, termasuk konteks kota/kode pos.                     | `"address"`, `"alamat"`, `"street address"`, `"home address"`, `"domicile"`                                |
+| **🪪 Identitas (ID)**   | Memvalidasi NIK, KTP, Paspor, atau NPWP (Cek panjang & format).               | `"nik"`, `"ktp"`, `"npwp"`, `"passport"`, `"sim"`, `"identity number"`, `"nomor identitas"`                |
+| **📅 Tanggal & Waktu** | Memvalidasi format tanggal, logika kalender, dan waktu realistis (Tgl Lahir). | `"date"`, `"tanggal"`, `"dob"`, `"birth date"`, `"tgl lahir"`, `"time"`, `"waktu"`                         |
+| **💰 Angka/Uang**      | Memvalidasi umur, harga, gaji, atau jumlah (Cek batasan nilai).               | `"age"`, `"umur"`, `"price"`, `"harga"`, `"salary"`, `"gaji"`, `"amount"`, `"nominal"`, `"cost"`           |
+| **🔗 URL/Website**     | Memvalidasi link web, domain, dan TLD (menolak localhost).                    | `"website"`, `"url"`, `"link"`, `"tautan"`, `"domain"`, `"homepage"`, `"situs"`                            |
+| **📝 Judul**           | Memvalidasi headline atau subjek untuk artikel/konten.                        | `"title"`, `"judul"`, `"subject"`, `"headline"`, `"topic"`, `"caption"`                                    |
+| **📄 Konten Teks**     | Memvalidasi teks isi, deskripsi, komentar, atau ulasan.                       | `"content"`, `"konten"`, `"description"`, `"deskripsi"`, `"story"`, `"comment"`, `"review"`, `"text area"` |
+| **🏷️ Tag/Label**       | Memvalidasi kata kunci pendek atau kategori.                                  | `"tag"`, `"kategori"`, `"category"`, `"label"`, `"keyword"`, `"tags"`                                      |
+
+> **💡 Catatan Penting:** > Logika validasi library ini bersifat **Semantik**, bukan hanya sintaksis (format).
+>
+> - Contoh 1: Memasukkan _"12345"_ ke dalam kolom **Nama** akan ditolak, bukan hanya karena mengandung angka, tetapi karena _"12345"_ tidak terlihat seperti nama manusia yang wajar.
+> - Contoh 2: Memasukkan _"Jln. Sudirman No. 5"_ akan diterima sebagai **Alamat**, tetapi akan ditolak jika labelnya adalah **Nama Orang**.
 
 ---
 
