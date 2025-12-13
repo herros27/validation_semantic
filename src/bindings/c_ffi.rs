@@ -1,8 +1,15 @@
 // src/bindings/c_ffi.rs
 #![cfg(feature = "native_ffi_setup")] // Atau fitur yang lebih spesifik jika perlu
-use crate::core_logic::{
-    validate_input_with_llm_sync, SupportedModel, ValidationResponse, API_CONFIG,
+use crate::core::{
+    validate_input_with_llm_sync,
 };
+
+use crate::config::API_CONFIG;
+
+use crate::models::{
+    SupportedModel,ValidationResponse
+};
+
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 

@@ -1,10 +1,13 @@
 #![cfg(feature = "python_bindings_feature")]
 
-use crate::core_logic::{
+use crate::core::{
     validate_input_with_llm_sync,
-    SupportedModel as RustSupportedModel,
-    API_CONFIG,
 };
+
+use crate::config::API_CONFIG;
+
+
+use crate::models::SupportedModel as RustSupportedModel;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 

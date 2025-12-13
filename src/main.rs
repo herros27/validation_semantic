@@ -2,8 +2,10 @@
 
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
+
+
 use validation_semantic::{
-    free_rust_string, validate_text_ffi, SupportedModel, ValidationResponse,
+    free_rust_string, validate_text_ffi, models::SupportedModel, models::ValidationResponse
 };
 
 fn main() {

@@ -3,13 +3,11 @@ use std::cell::RefCell;
 use js_sys;
 use wasm_bindgen::prelude::*; // Pastikan js_sys diimpor
 
-// Impor tipe dan fungsi async dari core_logic
-use crate::core_logic::{
-    // ValidationResponse, // Tidak digunakan secara langsung di snippet ini
-    SupportedModel,
-    // validate_input_with_llm_async, // Tidak digunakan secara langsung di snippet ini
+use crate::core::{
+    validate_input_with_llm_async,
 };
 
+use crate::models::SupportedModel;
 
 thread_local! {
     static CONFIG: RefCell<ModuleConfig> = RefCell::new(ModuleConfig::default());
@@ -45,13 +43,13 @@ pub async fn validate_text_js(
     let api_key = CONFIG.with(|c| c.borrow().api_key.clone())
         .ok_or("API key not configured")?;
     // 1. Mapping angka ke enum model (seperti yang sudah Anda lakukan di React)
-    let model_variant = match crate::core_logic::SupportedModel::from_int(model) {
+    let model_variant = match SupportedModel::from_int(model) {
         Some(m) => m,
         None => {
             let error_message = format!(
                 "Invalid model selector: {}. Valid options: [{}]",
                 model,
-                crate::core_logic::SupportedModel::valid_options_desc()
+                SupportedModel::valid_options_desc()
             );
             return Err(JsValue::from_str(&error_message));
         }
@@ -61,7 +59,7 @@ pub async fn validate_text_js(
     // 2. Panggil fungsi inti dari core_logic
     // Perhatikan path ke validate_input_with_llm_async mungkin perlu disesuaikan
     // tergantung struktur modul Anda (misalnya, crate::core_logic::...)
-    match crate::core_logic::validate_input_with_llm_async(&text, model_name, &label, &api_key).await {//ubah biar parameter nya API_KEY gemini
+    match validate_input_with_llm_async(&text, model_name, &label, &api_key).await {//ubah biar parameter nya API_KEY gemini
         Ok(validation_response_rust) => {
             // 3. Serialisasi hasil Rust (ValidationResponse) ke JsValue
             match serde_wasm_bindgen::to_value(&validation_response_rust) {

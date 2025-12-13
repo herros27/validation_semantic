@@ -1,97 +1,34 @@
 // src/core_logic.rs
+// Tahap Refactoring: Memisahkan logika inti ke dalam modul terpisah
 
-use dotenv::dotenv;
 use once_cell::sync::Lazy;
 use regex::Regex;
-use serde::{Deserialize, Serialize};
-use std::env;
-use std::collections::HashMap;
+
 // Import reqwest clients untuk sinkron dan asinkron
 #[cfg(feature = "native_ffi_setup")]
 use reqwest::blocking::Client as BlockingClient;
 
 use reqwest::Client as AsyncClient;
 use reqwest::StatusCode;
+use crate::models::{
+    ValidationResponse,
+    GeminiApiResponse
+};
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ValidationResponse {
-    pub valid: bool,
-    pub message: String,
-}
-
-#[derive(Deserialize)]
-pub struct BatchInput {
-    pub field: String,
-    pub value: String,
-    pub input_type: String,
-}
+use crate::config::*;
 
 
-#[repr(C)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SupportedModel {
-    GeminiFlash = 0,
-    GeminiFlashLite = 1,
-    GeminiFlashLatest = 2,
-    Gemma = 3,
-}
-impl SupportedModel {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            SupportedModel::GeminiFlash => "gemini-2.5-flash",
-            SupportedModel::GeminiFlashLite => "gemini-flash-lite-latest",
-            SupportedModel::GeminiFlashLatest => "gemini-flash-latest",
-            SupportedModel::Gemma => "gemma-3-27b-it",
-        }
-    }
-    pub fn from_int(value: i32) -> Option<Self> {
-        match value {
-            0 => Some(SupportedModel::GeminiFlash),
-            1 => Some(SupportedModel::GeminiFlashLite),
-            2 => Some(SupportedModel::GeminiFlashLatest),
-            3 => Some(SupportedModel::Gemma),
-            _ => None,
-        }
-    }
-    pub fn valid_options_desc() -> String {
-         format!(
-            "0 (GeminiFlash), 1 (GeminiFlashLite), 2 (GeminiFlashLatest), 3 (Gemma)"
-        )
-    }
-}
+// #[derive(Deserialize)]
+// pub struct BatchInput {
+//     pub field: String,
+//     pub value: String,
+//     pub input_type: String,
+// }
 
-// Struct untuk parsing respons Gemini API
-#[derive(Debug, Deserialize)]
-pub struct GeminiApiPart {
-    pub text: String,
-}
-#[derive(Debug, Deserialize)]
-pub struct GeminiApiContent {
-    pub parts: Vec<GeminiApiPart>,
-}
-#[derive(Debug, Deserialize)]
-pub struct GeminiApiResponseCandidate {
-    pub content: GeminiApiContent,
-}
-#[derive(Debug, Deserialize)]
-pub struct GeminiApiResponse {
-    pub candidates: Vec<GeminiApiResponseCandidate>,
-}
 
-// Konfigurasi API untuk menyimpan API key
-pub struct ApiConfig {
-    pub api_key: String,
-}
 
-pub static API_CONFIG: Lazy<Result<ApiConfig, String>> = Lazy::new(|| {
-    if dotenv().is_err() {
-        eprintln!("[WARN] .env file not found or failed to load. GOOGLE_API_KEY must be set in environment.");
-    }
-    let api_key = env::var("GOOGLE_API_KEY")
-        .map_err(|e| format!("[ApiConfig Init Error] GOOGLE_API_KEY not set: {}. Pastikan .env ada atau variabel lingkungan tersetting.", e))?;
-    Ok(ApiConfig { api_key })
-});
 
+// /*
 // --- Fungsi Validasi dengan LLM (Sinkron) ---
 #[cfg(not(target_arch = "wasm32"))]
 #[cfg(feature = "native_ffi_setup")]
@@ -237,53 +174,6 @@ pub async fn validate_input_with_llm_async( //ubah biar parameter nya API_KEY ge
     }
 }
 
-pub async fn validate_batch_with_llm_one_hit_async(
-    items: Vec<BatchInput>,
-    model_name: &str,
-    api_key: &str,
-) -> Result<HashMap<String, ValidationResponse>, Box<dyn std::error::Error + Send + Sync>> {
-
-    let mut prompt_body = String::from(
-        "Validasi semua input berikut sesuai tipe masing-masing.\n\n\
-        Format jawaban akhir (JSON valid):\n\
-        {\n  \"field\": {\"valid\": true/false, \"message\": \"...\"}\n}\n\n\
-        Daftar input:\n\n"
-    );
-
-    for item in items.iter() {
-        let inner_prompt = format_prompt(&item.value, &item.input_type);
-
-        prompt_body.push_str(&format!(
-            "[FIELD: {}]\n{}\n\n",
-            item.field,
-            inner_prompt
-        ));
-    }
-
-    let body = serde_json::json!({
-        "contents": [
-            { "parts": [ { "text": prompt_body } ] }
-        ]
-    });
-
-    let url = format!(
-        "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}",
-        model_name,
-        api_key
-    );
-
-    let client = AsyncClient::new();
-    let response = client.post(&url).json(&body).send().await?;
-    let text = response.text().await?;
-
-    let gemini_response: GeminiApiResponse = serde_json::from_str(&text)?;
-    let json_text = extract_text_from_gemini(gemini_response)?;
-
-    let result_map: HashMap<String, ValidationResponse> = serde_json::from_str(&json_text)?;
-
-    Ok(result_map)
-}
-
 
 fn clean_json_markdown(raw: &str) -> &str {
     raw.trim()
@@ -296,90 +186,164 @@ fn clean_json_markdown(raw: &str) -> &str {
 // --- Fungsi Validasi Sintaksis Lokal ---
 pub fn pre_validate_syntactically(user_input: &str, input_type_str: &str) -> Result<(), String> {
     let input = user_input.trim();
+    // Normalisasi input type agar match case-insensitive
     let input_type = input_type_str.trim().to_lowercase();
 
+    // 1. Cek Dasar: Tidak boleh kosong
     if input.is_empty() {
         return Err("Input tidak boleh kosong.".to_string());
     }
 
-    // if !matches!(input_type, "deskripsi" | "text area" | "konten" | "blog") && input.len() > 512 {
-    //     return Err("Input terlalu panjang (maksimal 512 karakter).".to_string());
-    // }
+    // 2. Batasan Panjang Global (Pencegahan memori overflow/spam ekstrem)
+    // Kecuali untuk "text area" atau konten panjang, batasi input wajar (misal 1000 char)
+    let is_long_text = matches!(
+        input_type.as_str(),
+        "text area" | "teks area" | "konten" | "deskripsi" | "blog" | "cerita" | "komentar" | 
+        "content" | "description" | "story" | "comment" | "body" | "message" | "post" | "article" | "review" | "summary"
+    );
 
-    if !["text area" , "teks area" , "konten" , "deskripsi" , "blog"].contains(&input_type.as_str())
-        && input.len() > 512
-    {
-        return Err("Input terlalu panjang (maksimal 512 karakter).".into());
+    if !is_long_text && input.len() > 1000 {
+        return Err(format!("Input terlalu panjang untuk kategori '{}'.", input_type_str));
     }
-
-    // if !matches!(input_type.as_str(), "deskripsi" | "text area" | "konten" | "blog") && input.len() > 512 {
-    //     return Err("Input terlalu panjang (maksimal 512 karakter).".to_string());
-    // }
 
     match input_type.as_str() {
-        "alamat email" | "email" => {
+        // --- KELOMPOK 1: EMAIL ---
+        // Cek: Mengandung @ dan ada titik setelahnya.
+        "alamat email" | "email" | "email address" | "mail" => {
             if input.len() > 254 {
-                return Err("Alamat email terlalu panjang (maksimal 254 karakter).".to_string());
+                return Err("Email terlalu panjang.".to_string());
             }
+            // Regex standar (General): Sesuatu@Sesuatu.Sesuatu
             static EMAIL_REGEX: Lazy<Regex> =
-                Lazy::new(|| Regex::new(r"^[^\s@]+@[^\s@]+\.[^\s@]+$").unwrap());
+                Lazy::new(|| Regex::new(r"^[^@\s]+@[^@\s]+\.[^@\s]+$").unwrap());
+            
             if !EMAIL_REGEX.is_match(input) {
-                return Err("Format alamat email tidak valid.".to_string());
+                return Err("Format email tidak valid (contoh: user@domain.com).".to_string());
+            }
+        }
+
+        // --- KELOMPOK 2: WEBSITE / URL ---
+        // Cek: Minimal ada satu titik (.) dan panjang minimal. Tidak wajib http/https.
+        "website" | "url" | "link" | "tautan" | "situs" | "domain" | "homepage" | "web" => {
+            if !input.contains('.') || input.len() < 4 {
+                return Err("Format URL tidak valid (harus mengandung domain, misal: example.com).".to_string());
+            }
+            if input.contains(' ') {
+                return Err("URL tidak boleh mengandung spasi.".to_string());
+            }
+        }
+
+        "nomor hp indonesia" | "nomor hp" | "phone" | "phone number" | "no hp" | "mobile" | "tel"  => {
+            // 1. Normalisasi:
+            //    Hapus spasi, strip, kurung.
+            //    TAPI: Jangan hapus tanda '+' jika ada di posisi paling depan.
+            let input_trimmed = input.trim();
+            
+            // Cek apakah ada '+' di awal
+            // let has_plus = input_trimmed.starts_with('+');
+
+            // Ambil hanya angkanya saja
+            let digits_only: String = input_trimmed.chars()
+                .filter(|c| c.is_numeric())
+                .collect();
+
+            // 2. Cek apakah kosong setelah dibersihkan
+            if digits_only.is_empty() {
+                return Err("Nomor telepon tidak boleh kosong.".to_string());
             }
 
-            // CATATAN: Pengecekan berikut sengaja menolak domain untuk testing (contoh: 'test@example.com').
-            // Hal ini akan menyebabkan tes yang menggunakan domain tersebut gagal,
-            // yang mana merupakan perilaku yang diharapkan untuk lingkungan produksi.
-            // let domain = input.split('@').nth(1).unwrap_or("");
-            // let forbidden = ["example.com", "example.org", "example.net", "test", "localhost", "invalid"];
-            // if forbidden.iter().any(|d| domain.ends_with(d)) {
-            //     return Err("Domain email tidak boleh menggunakan domain contoh/test/localhost/invalid.".to_string());
-            // }
+            // 3. Validasi Panjang (E.164 Standard)
+            //    Maksimal 15 digit. Minimal kita set 7 (untuk jaga-jaga nomor pendek internasional).
+            if digits_only.len() < 7 || digits_only.len() > 15 {
+                return Err("Panjang nomor telepon tidak valid (Global: 7-15 digit).".to_string());
+            }
+
+            // 4. Cek karakter valid
+            let is_valid_chars = input_trimmed.chars().all(|c| 
+                c.is_numeric() || c == '+' || c == '-' || c == ' ' || c == '(' || c == ')'
+            );
+
+            if !is_valid_chars {
+                return Err("Nomor telepon mengandung karakter yang tidak valid.".to_string());
+            }
         }
-        "nama lengkap" | "nama" => {
-            // static NAME_REGEX: Lazy<Regex> =
-            //     Lazy::new(|| Regex::new(r"^[a-zA-Z\s'-.]{3,80}$").unwrap());
-            // if !NAME_REGEX.is_match(input) {
-            //     return Err("Nama hanya boleh berisi huruf, spasi, tanda hubung (-), atau apostrof ('). Panjang 3-80 karakter.".to_string());
-            // }
-            if !input.chars().any(|c| c.is_alphabetic()) {
-                return Err("Nama harus mengandung setidaknya satu huruf.".to_string());
+
+        // --- KELOMPOK 3: USERNAME ---
+        // Cek: Tidak boleh ada spasi, panjang minimal 3.
+        "username" | "nama pengguna" | "handle" | "user id" | "account name" | "id pengguna" | "nama lengkap" | "nama" | "full name" | "name" | "complete name" | "nickname" | "first name" | "last name" => {
+            if input.len() < 3 {
+                return Err("Username terlalu pendek (minimal 3 karakter).".to_string());
             }
             if input.contains("  ") {
-                return Err("Nama tidak boleh mengandung dua spasi berurutan.".to_string());
+                return Err(format!("'{}' tidak boleh mengandung double spasi.", input_type_str));
             }
-            // Pengecekan spasi di awal/akhir dihapus karena sudah ditangani oleh `.trim()` di awal fungsi.
-        }
-        "nomor hp indonesia" => {
-            // Pengecekan panjang dan spasi manual dihapus karena sudah tercakup oleh validasi Regex di bawah.
-            // Regex adalah satu-satunya sumber kebenaran untuk format.
-            static PHONE_ID_REGEX: Lazy<Regex> =
-                Lazy::new(|| Regex::new(r"^(\+62|0)8[0-9]{7,12}$").unwrap());
-            if !PHONE_ID_REGEX.is_match(input) {
-                return Err("Format nomor hp Indonesia tidak valid. Harus diawali +628 atau 08 dan diikuti 7-12 digit angka.".to_string());
+            if input.chars().all(char::is_numeric) {
+                return Err(format!("'{}' tidak boleh hanya terdiri dari angka.", input_type_str));
             }
+            // Opsional: Cek karakter aneh, tapi "general" biarkan alphanumeric + simbol dasar
         }
-        "agama" => {
-            // Pengecekan panjang dan spasi manual dihapus karena sudah tercakup oleh validasi Regex di bawah.
-            // Regex adalah satu-satunya sumber kebenaran untuk format.
-            // static PHONE_ID_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^(\+62|0)8[0-9]{7,12}$").unwrap());
-            // if !PHONE_ID_REGEX.is_match(input) {
-            //     return Err("Format nomor hp Indonesia tidak valid. Harus diawali +628 atau 08 dan diikuti 7-12 digit angka.".to_string());
-            // }
-        }
-        "" => {
-            // Pengecekan panjang dan spasi manual dihapus karena sudah tercakup oleh validasi Regex di bawah.
-            // Regex adalah satu-satunya sumber kebenaran untuk format.
-            static PHONE_ID_REGEX: Lazy<Regex> =
-                Lazy::new(|| Regex::new(r"^(\+62|0)8[0-9]{7,12}$").unwrap());
-            if !PHONE_ID_REGEX.is_match(input) {
-                return Err("Format nomor hp Indonesia tidak valid. Harus diawali +628 atau 08 dan diikuti 7-12 digit angka.".to_string());
+
+        // --- KELOMPOK 4: IDENTITAS (NIK, KTP, NPWP, DLL) ---
+        // Cek: Harus mengandung angka. Panjang minimal logis (misal 5).
+        "nik" | "ktp" | "npwp" | "nomor identitas" | "identity number" | "passport" | "sim" | "id card" | "no ktp" => {
+             if input.len() < 5 {
+                return Err("Nomor identitas terlalu pendek.".to_string());
+            }
+            // Harus mengandung setidaknya satu digit angka
+            if !input.chars().any(|c| c.is_numeric()) {
+                return Err("Nomor identitas harus mengandung angka.".to_string());
             }
         }
-        _ => {
-            // Validasi umum sudah dilakukan di atas
+
+        // --- KELOMPOK 5: TANGGAL / WAKTU ---
+        // Cek: Harus mengandung angka.
+        "tanggal" | "date" | "tanggal lahir" | "dob" | "birth date" | "waktu" | "time" | "tgl" | "tgl lahir" => {
+            // General check: minimal ada angka (misal "17 agustus" atau "2023-01-01")
+            if !input.chars().any(|c| c.is_numeric()) {
+                return Err("Format tanggal/waktu harus mengandung angka.".to_string());
+            }
         }
+
+        // --- KELOMPOK 6: NUMERIK (UMUR, HARGA, GAJI) ---
+        // Cek: Harus mengandung angka.
+        "umur" | "age" | "harga" | "price" | "gaji" | "salary" | "nominal" | "amount" | "jumlah" | "biaya" | "cost" => {
+            // Kita izinkan format "Rp 50.000" atau "25 tahun", jadi cukup cek ada angka saja.
+            if !input.chars().any(|c| c.is_numeric()) {
+                 return Err("Input harus mengandung nilai angka.".to_string());
+            }
+        }
+
+        // --- KELOMPOK 7: TEKS UMUM (NAMA, ALAMAT, PRODUK, JUDUL, TAG, DLL) ---
+        // Cek: Panjang minimal 2 karakter agar tidak cuma 1 huruf/simbol acak.
+        "nama institusi" | "nama lembaga" | "institusi" | "lembaga" | 
+        "institution name" | "organization name" | "institution" | "organization" | "agency" | "institute" |
+        "nama perusahaan" | "perusahaan" | "company name" | "company" | "business name" | "business" | "corporate" |
+        "nama produk" | "product name" | "produk" | "product" | 
+        "nama barang" | "barang" | "item name" | "item" | 
+        "nama item" | "merchandise" | "goods" | "komoditas" | "jenis barang" |
+        "nama lokasi" | "lokasi" | "tempat" | "location name" | "location" | "place" | "venue" | "spot" | "area" |
+        "judul" | "title" | "subject" | "headline" | "caption" | "topic" |
+        "pekerjaan" | "job" | "occupation" | "profesi" | "jabatan" | "role" | "peran" | "posisi" | "karir" | "career" | "job title" |
+        "tag" | "kategori" | "category" | "label" | "keyword" | "tags" |
+        "alamat" | "address" | "home address" | "street address" | "domicile" => {
+            if input.len() < 2 {
+                return Err("Input terlalu pendek (minimal 2 karakter).".to_string());
+            }
+        }
+
+        // --- KELOMPOK 8: KONTEN PANJANG ---
+        // Cek: Panjang minimal agak lebih besar (misal 10) agar bukan spam "tes".
+        "text area" | "teks area" | "konten" | "deskripsi" | "blog" | "cerita" | "komentar" | 
+        "content" | "description" | "story" | "comment" | "body" | "message" | "post" | "article" | "review" | "summary" => {
+             if input.len() < 10 {
+                return Err("Konten terlalu pendek (minimal 10 karakter).".to_string());
+            }
+        }
+
+        // Default: Loloskan saja jika tipe tidak dikenal, biarkan LLM yang cek
+        _ => {}
     }
+
     Ok(())
 }
 
@@ -390,7 +354,7 @@ Focus on semantic validity, reasonableness, and relevant business rules. \
 Reject meaningless, dummy, or random input.";
 
     match input_type_str.to_lowercase().as_str() {
-        "alamat email" | "email" => format!(
+        "alamat email" | "email" | "email address" | "mail" => format!(
         "{pre_validation_note}\nValidate the following email address: \"{input}\".\n\
         - Ensure the format and domain are valid, and NOT from example domains (example.com, example.org, .test, .localhost, .invalid).\n\
         - Reject emails using dummy, disposable, or unprofessional domains.\n\
@@ -401,7 +365,8 @@ Reject meaningless, dummy, or random input.";
         input = user_input.replace("\"", "\\\"")
 
         ),
-        "nama institusi" | "nama lembaga" | "institusi" | "lembaga" => format!(
+        "nama institusi" | "nama lembaga" | "institusi" | "lembaga" | 
+    "institution name" | "organization name" | "institution" | "organization" | "agency" | "institute" => format!(
             "{pre_validation_note}\nValidate the input \"{type_str}\" from the following {type_str}.\n\
             Check whether the input represents a valid institution, organization, or agency name that could realistically exist.\n\
             \n\
@@ -453,7 +418,8 @@ Reject meaningless, dummy, or random input.";
             type_str = input_type_str,
             input = user_input.replace("\"", "\\\"")
         ),
-        "nama perusahaan" => format!(
+        "nama perusahaan" | "perusahaan" | 
+    "company name" | "company" | "business name" | "business" | "corporate" => format!(
             "{pre_validation_note}\nValidate the input \"{type_str}\" from the following {type_str}.\n\
             Check whether the input represents a valid company or business name that could realistically exist.\n\
             \n\
@@ -512,7 +478,9 @@ Reject meaningless, dummy, or random input.";
             type_str = input_type_str,
             input = user_input.replace("\"", "\\\"")
         ),
-        "nama produk" => format!(
+        "nama produk" | "product name" | "produk" | "product" | 
+    "nama barang" | "barang" | "item name" | "item" | 
+    "nama item" | "merchandise" | "goods" | "komoditas" | "jenis barang" => format!(
             "{pre_validation_note}\nValidate the input \"{type_str}\" from the following {type_str}.\n\
             Check whether the input represents a valid, legal, and appropriate product name that could realistically exist in the market.\n\
             \n\
@@ -585,7 +553,8 @@ Reject meaningless, dummy, or random input.";
             input = user_input.replace("\"", "\\\"")
         ),
        
-        "nama lokasi" | "lokasi" | "tempat" => format!(
+        "nama lokasi" | "lokasi" | "tempat" | 
+    "location name" | "location" | "place" | "venue" | "spot" | "area" => format!(
             "{pre_validation_note}\nValidate the input \"{type_str}\" from the following {type_str}.\n\
             Check whether the input represents a valid location name that could realistically exist.\n\
             \n\
@@ -651,7 +620,8 @@ Reject meaningless, dummy, or random input.";
             type_str = input_type_str,
             input = user_input.replace("\"", "\\\"")
         ),
-        "nama lengkap" | "nama" => format!(
+        "nama lengkap" | "nama" | 
+    "full name" | "name" | "complete name" | "nickname" | "first name" | "last name" => format!(
             "{pre_validation_note}\nValidate the input \"{type_str}\" from the following {type_str}.\n\
             Check whether the input represents a valid human full name in general, \
             while remaining tolerant toward unique, international, or non-conventional names.\n\
@@ -697,7 +667,7 @@ Reject meaningless, dummy, or random input.";
             type_str = input_type_str,
             input = user_input.replace("\"", "\\\"")
         ),
-        "judul" => format!(
+        "judul" | "title" | "subject" | "headline" | "caption" | "topic" => format!(
             "{pre_validation_note}\nValidate the input \"{type_str}\" from the following {type_str}.\n\
             Check whether the input represents a valid title that could realistically be used for articles, documents, books, or other content.\n\
             \n\
@@ -759,7 +729,7 @@ Reject meaningless, dummy, or random input.";
             type_str = input_type_str,
             input = user_input.replace("\"", "\\\"")
         ),
-        "pekerjaan" => format!(
+        "pekerjaan" | "job" | "occupation" | "profesi" | "jabatan" | "role" | "peran" | "posisi" | "karir" | "career" | "job title" => format!(
             "{pre_validation_note}\nValidate the input \"{type_str}\" from the following {type_str}.\n\
             Check whether the input represents a valid job title, occupation, or profession that could realistically exist.\n\
             \n\
@@ -832,54 +802,40 @@ Reject meaningless, dummy, or random input.";
             input = user_input.replace("\"", "\\\"")
         ),
         
-        "tag" => format!(
+        "tag" | "kategori" | "category" | "label" | "keyword" | "tags" => format!(
             "{pre_validation_note}\nValidate the input \"{type_str}\" from the following {type_str}.\n\
             Check whether the input represents a valid tag that could realistically be used for categorization, labeling, or content organization.\n\
             \n\
             Validation rules:\n\
             - The tag must not be random, meaningless, or dummy text (e.g., 'asdf', 'qwerty', 'Lorem ipsum', 'Test Tag').\n\
-            - The tag should contain meaningful words that suggest it describes or categorizes content.\n\
-            - The tag may include descriptive terms, categories, topics, or keywords that help organize content.\n\
-            - The tag length must be between 2 and 50 characters (tags are typically shorter than other content).\n\
-            - The tag cannot be a single generic word without descriptive context (e.g., 'Tag', 'Label', 'Category').\n\
+            - The tag should contain meaningful words that describe, categorize, or relate to content.\n\
+            - The tag may include one or multiple words (e.g., 'web development', 'machine learning').\n\
+            - Tags with spaces in the middle ARE allowed as long as they form a meaningful phrase.\n\
+            - The tag length must be between 2 and 50 characters.\n\
+            - The tag cannot be a single overly-generic word (e.g., 'Tag', 'Label', 'Category').\n\
             - The tag must not start or end with a space.\n\
-            - Special characters like hyphens (-), underscores (_), periods (.), and numbers are acceptable if used appropriately.\n\
-            - Avoid clearly unnatural or random characters (e.g., #, $, %, @, spaces) unless they are part of a legitimate tag format.\n\
-            - The tag should sound like a real category or keyword that could be used for content organization.\n\
-            - Tags are typically lowercase or camelCase, and may be single words or short phrases.\n\
-            - The tag should be concise and descriptive of the content it represents.\n\
+            - Special characters like hyphens (-), underscores (_), periods (.), and numbers are acceptable when used appropriately.\n\
+            - Avoid clearly unnatural or random characters (e.g., #, $, %, @) unless they are legitimately part of a tag.\n\
+            - The tag should sound like a real category, keyword, or label used for organizing content.\n\
+            - Multi-word tags should represent clear concepts, topics, or categories (e.g., 'web development', 'data analysis').\n\
             \n\
             Valid tag examples:\n\
             - \"technology\"\n\
             - \"programming\"\n\
             - \"web-development\"\n\
-            - \"machine-learning\"\n\
-            - \"artificial-intelligence\"\n\
-            - \"data-science\"\n\
-            - \"mobile-apps\"\n\
-            - \"ui-design\"\n\
+            - \"machine learning\"\n\
+            - \"artificial intelligence\"\n\
+            - \"mobile apps\"\n\
+            - \"ui design\"\n\
             - \"frontend\"\n\
-            - \"backend\"\n\
-            - \"javascript\"\n\
-            - \"python\"\n\
+            - \"backend development\"\n\
+            - \"data science\"\n\
             - \"react\"\n\
-            - \"nodejs\"\n\
-            - \"tutorial\"\n\
-            - \"beginner\"\n\
-            - \"advanced\"\n\
-            - \"tips\"\n\
-            - \"review\"\n\
-            - \"news\"\n\
-            - \"business\"\n\
-            - \"marketing\"\n\
-            - \"startup\"\n\
-            - \"productivity\"\n\
-            - \"design\"\n\
-            - \"cooking\"\n\
-            - \"travel\"\n\
-            - \"fitness\"\n\
-            - \"health\"\n\
-            - \"education\"\n\
+            - \"python\"\n\
+            - \"digital marketing\"\n\
+            - \"business strategy\"\n\
+            - \"health tips\"\n\
+            - \"travel guide\"\n\
             \n\
             Invalid tag examples:\n\
             - \"asdf tag\"\n\
@@ -892,14 +848,10 @@ Reject meaningless, dummy, or random input.";
             - \"Generic Category\"\n\
             - \"asdf qwerty\"\n\
             - \"123456789\"\n\
-            - \"tag with spaces\"\n\
             - \"@#$%\"\n\
             \n\
             Important note:\n\
-            Tags can vary widely across different platforms, content types, and organizational systems. Accept both single-word tags \
-            (like 'technology') and compound tags (like 'web-development' or 'machine-learning'). Tags are typically used for \
-            content categorization, search optimization, and organization purposes.\n\
-            The key is that the tag should appear to be a legitimate category or keyword that could realistically be used for content organization.\n\
+            Tags may be single words or multi-word phrases, as long as they represent real categories, concepts, or keywords commonly used for organizing or labeling content.\n\
             \n\
             The output must be in the following JSON format (without any additional text):\n\
             {{\n\
@@ -911,7 +863,8 @@ Reject meaningless, dummy, or random input.";
             type_str = input_type_str,
             input = user_input.replace("\"", "\\\"")
         ),
-        "alamat" => format!(
+
+        "alamat" | "address" | "home address" | "street address" | "domicile" => format!(
             "{pre_validation_note}\nValidate the input \"{type_str}\" from the following {type_str}.\n\
             Check whether the input represents a valid physical address that could realistically exist.\n\
             \n\
@@ -957,7 +910,8 @@ Reject meaningless, dummy, or random input.";
             type_str = input_type_str,
             input = user_input.replace("\"", "\\\"")
         ),
-        "text area" | "teks area" | "konten" | "deskripsi" | "blog" | "cerita" | "komentar" => format!(
+        "text area" | "teks area" | "konten" | "deskripsi" | "blog" | "cerita" | "komentar" | 
+    "content" | "description" | "story" | "comment" | "body" | "message" | "post" | "article" | "review" | "summary" => format!(
         "{note}\nValidate the input \"{type_str}\" from the following text.\n\
         Check whether the entered text is truly meaningful content (for example: article, blog, story, comment, note, or description) and not just dummy/placeholder or random text.\n\
         \n\
@@ -1009,43 +963,302 @@ Reject meaningless, dummy, or random input.";
         input = user_input.replace("\"", "\\\"")
 
         ),
-        _ => format!(
-            "{note}\nValidasi input berikut dari user, bertipe \"{type_str}\": \"{input}\"\n\
-            Periksa apakah input yang diberikan merupakan data yang valid, bermakna, dan realistis sesuai dengan jenis input yang diminta.\n\
+        "username" | "nama pengguna" | "handle" | "user id" | "account name" | "id pengguna"=> format!(
+            // Logic username...
+            "{pre_validation_note}\nValidate the input \"{type_str}\" from the following {type_str}.\n\
+        Check whether the input represents a valid, appropriate, and properly formatted user handle or digital identity.\n\
+        \n\
+        Validation rules:\n\
+        - The username must not be random, meaningless, or dummy text (e.g., 'asdf', 'qwerty', 'user1', 'test').\n\
+        - The username MUST NOT contain spaces. It should be a single continuous string.\n\
+        - The username should typically contain alphanumeric characters (a-z, 0-9), underscores (_), or periods (.).\n\
+        - The length must be between 3 and 30 characters.\n\
+        - The username cannot be a reserved system word (e.g., 'admin', 'root', 'support', 'system', 'moderator').\n\
+        - The username must not look like a full email address (unless specifically requested) or a URL.\n\
+        - Avoid clearly unnatural or random character sequences (e.g., '!!!!', '$$$') unless part of a stylized handle.\n\
+        - The username should sound like a legitimate digital identity chosen by a human.\n\
+        \n\
+        STRICT REJECTION RULES - REJECT usernames that are:\n\
+        - CONTAINING SPACES (e.g., 'John Doe' is a Name, NOT a Username. 'john_doe' is a Username).\n\
+        - Profane, offensive, or vulgar in any language (especially Indonesian and English).\n\
+        - Hate speech, racial slurs, or sexually explicit terms.\n\
+        - Impersonating verified entities or official positions (e.g., 'Official_Admin', 'Staff_Support').\n\
+        - Generic placeholders that look like bot generation (e.g., 'user_12345', 'guest999').\n\
+        \n\
+        Valid username examples:\n\
+        - \"herros27\"\n\
+        - \"kemas_khairunsyah\"\n\
+        - \"siti.aminah99\"\n\
+        - \"gamer_pro_id\"\n\
+        - \"teknologi.masa.kini\"\n\
+        - \"john_doe\"\n\
+        - \"budi.santoso\"\n\
+        - \"coding_master\"\n\
+        - \"design_guru_2024\"\n\
+        - \"alpha.wolf\"\n\
+        \n\
+        Invalid username examples (MUST REJECT):\n\
+        - \"John Doe\" (Contains space - invalid for username)\n\
+        - \"kemas khairunsyah\" (Contains space)\n\
+        - \"admin\" (Reserved word)\n\
+        - \"root\" (Reserved word)\n\
+        - \"asdfghjkl\"\n\
+        - \"user1234\" (Too generic)\n\
+        - \"test_user\"\n\
+        - \"anjing_gila\" (Profanity/Inappropriate in Indonesian)\n\
+        - \"f*ck_you\" (Profanity)\n\
+        - \"$$$$$\"\n\
+        - \"http://website.com\"\n\
+        - \"budi@gmail.com\" (Looks like email, not a handle)\n\
+        \n\
+        Important note:\n\
+        Distinguish clearly between a 'Name' (Nama Lengkap) and a 'Username'. A Name can have spaces and special characters (e.g., 'Dr. Budi'). \
+        A Username is a digital identifier/handle used for login or profile URL and typically CANNOT have spaces (e.g., 'dr_budi'). \
+        Prioritize checking for spaces and inappropriate content.\n\
+        \n\
+        The output must be in the following JSON format (without any additional text):\n\
+        {{\n\
+            \"valid\": true or false,\n\
+            \"message\": \"a short explanation of why it is valid or invalid and use Bahasa Indonesia for this message response\"\n\
+        }}\n\
+        \n\
+        Input: \"{input}\"",
+        type_str = input_type_str,
+        input = user_input.replace("\"", "\\\"")
+        ),
+
+        "website" | "url" | "link" | "tautan" | "situs" | "domain" | "homepage" | "web" => format!(
+            "{pre_validation_note}\nValidate the input \"{type_str}\" from the following {type_str}.\n\
+            Check whether the input represents a valid, properly formatted, and realistic website URL or domain name.\n\
             \n\
-            Aturan validasi umum:\n\
-            - Tolak input yang tidak bermakna, dummy, placeholder, atau asal-asalan (misal: 'Lorem ipsum', 'asdf', 'qwerty', 'Test Data', 'Random Input', dsb).\n\
-            - Input harus memiliki konteks yang jelas dan dapat dipahami sesuai jenis datanya.\n\
-            - Input tidak boleh berupa teks acak atau rangkaian karakter tanpa makna.\n\
-            - Input harus terdengar seperti data yang legitimate dan realistis.\n\
+            Validation rules:\n\
+            - The URL must not be random, meaningless, or dummy text (e.g., 'asdf', 'link', 'test.com', 'example.com').\n\
+            - The input should look like a standard URL format (e.g., starting with 'http://', 'https://', 'www.', or ending with a valid TLD like '.com', '.id', '.org').\n\
+            - Valid TLDs (Top Level Domains) are required (e.g., .com, .net, .id, .co.id, .io, .dev, etc.).\n\
+            - Reject incomplete domains (e.g., just 'google' without '.com').\n\
+            - Reject local or private network addresses unless explicitly allowed (e.g., 'localhost', '127.0.0.1', '192.168.x.x').\n\
+            - The URL must not contain spaces (URLs cannot have spaces).\n\
+            - The URL should appear to be a publicly accessible site.\n\
             \n\
-            Aturan spesifik berdasarkan jenis input:\n\
-            - Jika input adalah email: domain tidak boleh domain contoh/dummy (seperti example.com, test.com).\n\
-            - Jika input adalah nama: harus terlihat seperti nama manusia, institusi, produk, atau entitas asli.\n\
-            - Jika input adalah nomor HP: harus masuk akal dan sesuai format Indonesia (08xx-xxxx-xxxx).\n\
-            - Jika input adalah alamat: harus mengandung elemen geografis yang realistis.\n\
-            - Jika input adalah pekerjaan: harus terdengar seperti job title yang legitimate.\n\
-            - Jika input adalah judul: harus memiliki struktur yang wajar untuk judul konten.\n\
-            - Jika input adalah tag: harus berupa kategori atau kata kunci yang bermakna.\n\
-            - Jika input adalah konten teks: harus memiliki makna dan struktur kalimat yang wajar.\n\
+            STRICT REJECTION RULES - REJECT inputs that are:\n\
+            - MISSING TLD (e.g., 'facebook', 'youtube' -> Invalid. Must be 'facebook.com').\n\
+            - LOCALHOST/PRIVATE IP (e.g., 'localhost:3000', '192.168.1.1').\n\
+            - DUMMY DOMAINS (e.g., 'example.com', 'mysite.com', 'test.com').\n\
+            - GENERIC TEXT (e.g., 'link', 'website saya', 'klik disini').\n\
+            - MALICIOUS/PHISHING PATTERNS (e.g., suspicious long subdomains or misleading typos of famous brands if obvious).\n\
             \n\
-            Contoh input valid:\n\
-            - Email: \"john.doe@company.com\", \"siti.aisyah@gmail.com\"\n\
-            - Nama: \"Budi Santoso\", \"Universitas Indonesia\", \"iPhone 15\"\n\
-            - Alamat: \"Jl. Sudirman No. 123, Jakarta Pusat\"\n\
-            - Pekerjaan: \"Software Developer\", \"Marketing Manager\"\n\
-            - Judul: \"Cara Belajar Programming untuk Pemula\"\n\
-            - Tag: \"technology\", \"web-development\"\n\
+            Valid URL examples:\n\
+            - \"https://www.google.com\"\n\
+            - \"www.tokopedia.com\"\n\
+            - \"facebook.com\"\n\
+            - \"https://github.com/herros27\"\n\
+            - \"kemas.dev\"\n\
+            - \"detik.com\"\n\
+            - \"https://subdomain.example-real-business.co.id/page\"\n\
             \n\
-            Contoh input tidak valid:\n\
-            - \"asdf\", \"qwerty123\", \"Lorem ipsum\", \"Test Data\", \"Random Input\"\n\
-            - Email: \"test@example.com\", \"user@dummy.org\"\n\
-            - Nama: \"My Name\", \"Test Company\", \"Generic Product\"\n\
-            - Nomor HP: \"1234567890\" (tidak sesuai format Indonesia)\n\
+            Invalid URL examples (MUST REJECT):\n\
+            - \"google\" (Missing .com)\n\
+            - \"www.google\" (Missing TLD)\n\
+            - \"http://\" (Incomplete)\n\
+            - \"localhost\"\n\
+            - \"127.0.0.1\"\n\
+            - \"example.com\"\n\
+            - \"test.com\"\n\
+            - \"website saya\" (Contains spaces)\n\
+            - \"asdf\"\n\
             \n\
-            Jika tidak valid, berikan alasan dan saran perbaikan.\n\
-            Jawab HANYA dalam format JSON berikut (tanpa teks tambahan):\n\
-            {{ \"valid\": true|false, \"message\": \"penjelasan singkat mengapa valid/tidak valid dalam Bahasa Indonesia\" }}",
+            Important note:\n\
+            Be lenient on the protocol (http/https). If the user types 'google.com', accept it even without 'https://'. \
+            However, be STRICT on the structure (must have a domain name and a TLD). Reject single words that look like search queries.\n\
+            \n\
+            The output must be in the following JSON format (without any additional text):\n\
+            {{\n\
+                \"valid\": true or false,\n\
+                \"message\": \"a short explanation of why it is valid or invalid and use Bahasa Indonesia for this message response\"\n\
+            }}\n\
+            \n\
+            Input: \"{input}\"",
+            type_str = input_type_str,
+            input = user_input.replace("\"", "\\\"")
+        ),
+
+        "nik" | "ktp" | "npwp" | "nomor identitas" | "identity number" | "passport" | "sim" | "id card" | "no ktp" => format!(
+            "{pre_validation_note}\nValidate the input \"{type_str}\" from the following {type_str}.\n\
+            Check whether the input represents a valid, properly formatted, and realistic identity number.\n\
+            \n\
+            Validation rules:\n\
+            - The input must not be random, meaningless, or dummy text (e.g., '123456', '000000', '111111', 'ktp saya').\n\
+            - **NIK / KTP (Indonesian ID)**: MUST be exactly 16 digits long. It must contain ONLY numbers. It should not look like a sequential number (1234567890123456).\n\
+            - **NPWP (Tax ID)**: MUST be 15 or 16 digits long. It typically contains numbers and formatting characters (dots/hyphens).\n\
+            - **Passport**: MUST be alphanumeric (contain both letters and numbers, usually starting with a letter). Length is typically 7-9 characters.\n\
+            - **SIM (Driving License)**: MUST be numeric, typically 12-14 digits.\n\
+            - General ID: Must look like a formal government-issued ID, not a simple integer like '1' or '100'.\n\
+            \n\
+            STRICT REJECTION RULES - REJECT inputs that are:\n\
+            - WRONG LENGTH (e.g., NIK with 10 digits or 20 digits).\n\
+            - SEQUENTIAL/REPEATING (e.g., '123456789...', '99999999...').\n\
+            - ALPHABETIC IN NUMERIC FIELDS (e.g., 'NIK123' -> Invalid, NIK must be purely numeric).\n\
+            - DUMMY DATA (e.g., '12345', 'test', 'id_card', '0000000000000000').\n\
+            \n\
+            Valid examples:\n\
+            - \"3273120101900001\" (NIK - 16 digits, realistic format)\n\
+            - \"3171234567890001\" (NIK)\n\
+            - \"09.254.294.3-407.000\" (NPWP - formatted)\n\
+            - \"092542943407000\" (NPWP - unformatted)\n\
+            - \"B1234567\" (Passport - Alphanumeric)\n\
+            - \"X9876543\" (Passport)\n\
+            \n\
+            Invalid examples (MUST REJECT):\n\
+            - \"123456\" (Too short)\n\
+            - \"1234567890123456\" (Sequential dummy)\n\
+            - \"1111111111111111\" (Repeating dummy)\n\
+            - \"327312010190000\" (15 digits - NIK must be 16)\n\
+            - \"A123456789012345\" (NIK cannot contain letters)\n\
+            - \"0000000000000000\"\n\
+            - \"kartu tanda penduduk\"\n\
+            \n\
+            Important note:\n\
+            For 'NIK' or 'KTP', be very strict about the **16-digit length** requirement. If the user provides spaces or dashes (e.g. '3273-1201...'), consider it valid if the total digit count is 16.\n\
+            \n\
+            The output must be in the following JSON format (without any additional text):\n\
+            {{\n\
+                \"valid\": true or false,\n\
+                \"message\": \"a short explanation of why it is valid or invalid (mention specifically about length or format if wrong) and use Bahasa Indonesia for this message response\"\n\
+            }}\n\
+            \n\
+            Input: \"{input}\"",
+            type_str = input_type_str,
+            input = user_input.replace("\"", "\\\"")
+        ),
+
+        "tanggal" | "date" | "tanggal lahir" | "dob" | "birth date" | "waktu" | "time" | "tgl" | "tgl lahir" => format!(
+            "{pre_validation_note}\nValidate the input \"{type_str}\" from the following {type_str}.\n\
+            Check whether the input represents a valid, logically correct, and realistic date or time.\n\
+            \n\
+            Validation rules:\n\
+            - The input must not be random text, dummy numbers, or impossible dates (e.g., 'asdf', '00-00-0000', '32-01-2023').\n\
+            - **Format**: Accept common formats like DD-MM-YYYY, YYYY-MM-DD, DD/MM/YYYY, or natural language (e.g., '17 Agustus 1945').\n\
+            - **Calendar Logic**: Verify that the day exists in that month (e.g., Reject '30 February', '31 April').\n\
+            - **Context - Birth Date (DOB)**: \n\
+                - The date MUST be in the past.\n\
+                - The year must be realistic for a living person (e.g., between 1900 and Current Year). Reject years like 1800 or 2050.\n\
+            - **Context - Future/General Date**: If the label is just 'Date' (not DOB), future dates are allowed unless specified otherwise.\n\
+            - **Time**: If input is time, valid formats are HH:MM (24h or 12h with AM/PM). Hours must be 0-23, Minutes 0-59.\n\
+            \n\
+            STRICT REJECTION RULES - REJECT inputs that are:\n\
+            - IMPOSSIBLE DATES (e.g., '32/01/2022', '30/02/2023').\n\
+            - UNREALISTIC DOB (e.g., '01/01/2050' -> User hasn't been born yet).\n\
+            - DUMMY PATTERNS (e.g., '00/00/0000', '11/11/1111', '1234').\n\
+            - INCOMPLETE (e.g., just '2023' or just 'Januari').\n\
+            \n\
+            Valid examples:\n\
+            - \"17-08-1945\"\n\
+            - \"17 Agustus 1945\"\n\
+            - \"1990-12-31\"\n\
+            - \"01/01/2000\"\n\
+            - \"14:30\" (Time)\n\
+            - \"10 Desember 2024\"\n\
+            \n\
+            Invalid examples (MUST REJECT):\n\
+            - \"30 Februari 2023\" (Date doesn't exist)\n\
+            - \"00-00-0000\"\n\
+            - \"2050-01-01\" (Invalid if context is Date of Birth)\n\
+            - \"123456\"\n\
+            - \"tanggal\"\n\
+            - \"asdf\"\n\
+            - \"32/12/2022\"\n\
+            \n\
+            The output must be in the following JSON format (without any additional text):\n\
+            {{\n\
+                \"valid\": true or false,\n\
+                \"message\": \"a short explanation of why it is valid or invalid (if invalid, mention specifically if the date doesn't exist or is unrealistic) and use Bahasa Indonesia for this message response\"\n\
+            }}\n\
+            \n\
+            Input: \"{input}\"",
+            type_str = input_type_str,
+            input = user_input.replace("\"", "\\\"")
+        ),
+
+        "umur" | "age" | "harga" | "price" | "gaji" | "salary" | "nominal" | "amount" | "jumlah" | "biaya" | "cost" => format!(
+            "{pre_validation_note}\nValidate the input \"{type_str}\" from the following {type_str}.\n\
+            Check whether the input represents a valid, logically correct, and realistic numeric value based on its context.\n\
+            \n\
+            Validation rules:\n\
+            - The input must be a numeric value. It can contain digits, currency symbols (Rp, $), or separators (.,).\n\
+            - REJECT text that is not a number (e.g., 'mahal', 'murah', 'banyak', 'asdf').\n\
+            - **Context - Age (Umur)**: \n\
+                - Must be an integer between 0 and 120.\n\
+                - Reject negative numbers.\n\
+                - Reject unrealistic ages (e.g., 200, 1000).\n\
+            - **Context - Price/Salary/Amount (Harga/Gaji)**: \n\
+                - Must be a non-negative number (>= 0).\n\
+                - Allow currency formatting (e.g., 'Rp 10.000', '100.000', '$50').\n\
+                - Reject unrealistic values for the context (e.g., Salary of '10 rupiah', Price of '-5000').\n\
+            \n\
+            STRICT REJECTION RULES - REJECT inputs that are:\n\
+            - NEGATIVE VALUES (unless context explicitly allows debt/loss, generally Age/Price are positive).\n\
+            - UNREALISTIC NUMBERS (e.g., Age: '1000', Salary: '1').\n\
+            - RANDOM TEXT (e.g., 'seribu', 'sejuta' -> Reject if you require digit format. Accept only if digits are present).\n\
+            - MIXED GIBBERISH (e.g., '123asdf').\n\
+            \n\
+            Valid examples:\n\
+            - \"25\" (Age)\n\
+            - \"17 tahun\" (Age with unit - Acceptable)\n\
+            - \"5.000.000\" (Price/Salary)\n\
+            - \"Rp 150.000\"\n\
+            - \"$10.50\"\n\
+            - \"0\" (Free/Zero amount)\n\
+            \n\
+            Invalid examples (MUST REJECT):\n\
+            - \"-5\" (Negative age/price)\n\
+            - \"200\" (Invalid if context is Age)\n\
+            - \"abc\"\n\
+            - \"mahal banget\"\n\
+            - \"10.0.0.1\" (IP Address, not a number)\n\
+            \n\
+            Important note:\n\
+            Handle Indonesian number formatting where '.' is often used as a thousand separator (e.g., 1.000 = one thousand). \
+            If the input contains units (e.g., '25 years old', 'Rp 1000'), extract the numeric part to validate realism.\n\
+            \n\
+            The output must be in the following JSON format (without any additional text):\n\
+            {{\n\
+                \"valid\": true or false,\n\
+                \"message\": \"a short explanation of why it is valid or invalid (mention if the number is unrealistic or negative) and use Bahasa Indonesia for this message response\"\n\
+            }}\n\
+            \n\
+            Input: \"{input}\"",
+            type_str = input_type_str,
+            input = user_input.replace("\"", "\\\"")
+        ),
+            _ => format!(
+            r#"
+            Role: Strict Data Semantic Validator.
+            Task: Analyze the following user input which is claimed to be of type "{type_str}".
+
+            Input to Validate: "{input}"
+            Context Note: {note}
+
+            Validation Rules:
+            1.  **Meaning & Realism**: Reject input that appears to be gibberish (e.g., "asdf", "qwerty"), placeholders (e.g., "Lorem Ipsum", "Test Data", "String"), or generic dummy data.
+            2.  **Type Consistency**: The input must semantically match the intended type "{type_str}".
+            3.  **Specific Checks**:
+                - **Email**: Must use a valid, non-dummy domain (reject example.com, test.com).
+                - **Name**: Must look like a legitimate human name, institution, or real entity.
+                - **Phone**: If it looks like a phone number, ensure it makes sense (prefer Indonesian format 08xx if ambiguous).
+                - **Address**: Must contain realistic geographic elements (street, city, etc.).
+                - **Text/Content**: Must have coherent sentence structure and meaning.
+
+            Output Requirements:
+            - Respond ONLY with a raw JSON object. Do not include Markdown formatting (like ```json).
+            - The "message" field MUST be in **INDONESIAN** (Bahasa Indonesia).
+            - If invalid, the "message" should explain why it is rejected and suggest a correction.
+
+            JSON Schema:
+            {{
+                "valid": true/false,
+                "message": "Reason for validity or invalidity in Indonesian"
+            }}
+            "#,
             note = pre_validation_note,
             type_str = input_type_str,
             input = user_input.replace("\"", "\\\"")
@@ -1175,4 +1388,267 @@ pub fn extract_text_from_gemini(
 
     Ok(cleaned.to_string())
 }
+// */
 
+// src/core_logic.rs
+// tahap RED: implementasi minimal agar test bisa compile dan integrasi bisa jalan
+
+// --- DEFINISI STRUKTUR DATA (Harus ada agar test bisa compile) ---
+
+/*
+// --- FUNGSI UTAMA (STUB / KOSONG) ---
+
+// 1. Validasi Sintaksis (Lokal)
+pub fn pre_validate_syntactically(_user_input: &str, _input_type_str: &str) -> Result<(), String> {
+    // TAHAP RED:
+    // Kita belum menulis Regex apapun.
+    // Menggunakan todo!() akan membuat test crash -> RED.
+    todo!("Validasi sintaksis belum dibuat")
+}
+
+// 2. Format Prompt
+pub fn format_prompt(_user_input: &str, _input_type_str: &str) -> String {
+    // TAHAP RED:
+    // Return string kosong. Test yang mengecek apakah prompt mengandung kata "JSON" akan gagal.
+    String::new()
+}
+
+// 3. Generate Body JSON
+pub fn common_body_generation(_prompt: &str, _model_name: &str) -> serde_json::Value {
+    // TAHAP RED:
+    serde_json::json!({})
+}
+
+// 4. Parse Response
+pub fn parse_gemini_response(
+    _gemini_api_response: GeminiApiResponse,
+) -> Result<ValidationResponse, Box<dyn std::error::Error + Send + Sync>> {
+    // TAHAP RED:
+    // Belum ada logika cleaning markdown atau parsing JSON.
+    todo!("Logika parsing response belum diimplementasikan")
+}
+
+// --- FUNGSI INTEGRASI (ASYNC/SYNC) ---
+
+pub async fn validate_input_with_llm_async(
+    _user_input: &str,
+    _model_name: &str,
+    _input_type_str: &str,
+    _gemini_api_key: &str,
+) -> Result<ValidationResponse, Box<dyn std::error::Error + Send + Sync>> {
+    // TAHAP RED:
+    // Fungsi dipanggil test, tapi langsung panic.
+    todo!("Fungsi validasi async belum diimplementasikan")
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+#[cfg(feature = "native_ffi_setup")]
+pub fn validate_input_with_llm_sync(
+    _user_input: &str,
+    _model_name: &str,
+    _input_type_str: &str,
+    _config: &ApiConfig,
+) -> Result<ValidationResponse, Box<dyn std::error::Error + Send + Sync>> {
+    // TAHAP RED:
+    todo!("Fungsi validasi sync belum diimplementasikan")
+}
+ */
+//tahap GREEN: implementasi lengkap semua fungsi di atas agar test dan integrasi bisa jalan sukses
+// src/core_logic.rs
+/* 
+
+
+// --- STRUKTUR DATA UTAMA ---
+
+
+
+// --- IMPLEMENTASI LOGIKA UTAMA (MENGGANTIKAN TODO!) ---
+
+// 1. Validasi Sintaksis (Regex)
+pub fn pre_validate_syntactically(user_input: &str, input_type_str: &str) -> Result<(), String> {
+    let input = user_input.trim();
+    let input_type = input_type_str.trim().to_lowercase();
+
+    if input.is_empty() {
+        return Err("Input tidak boleh kosong.".to_string());
+    }
+
+    match input_type.as_str() {
+        "alamat email" | "email" => {
+            if input.len() > 254 {
+                return Err("Alamat email terlalu panjang.".to_string());
+            }
+            // Regex sederhana untuk email
+            static EMAIL_REGEX: Lazy<Regex> =
+                Lazy::new(|| Regex::new(r"^[^\s@]+@[^\s@]+\.[^\s@]+$").unwrap());
+            if !EMAIL_REGEX.is_match(input) {
+                return Err("Format alamat email tidak valid.".to_string());
+            }
+        }
+        "nama lengkap" | "nama" => {
+             // Logic: Minimal ada 1 huruf alfabet
+            if !input.chars().any(|c| c.is_alphabetic()) {
+                return Err("Nama harus mengandung setidaknya satu huruf.".to_string());
+            }
+            if input.len() < 3 {
+                 return Err("Nama terlalu pendek.".to_string());
+            }
+            if input.contains("  ") {
+                return Err("Nama tidak boleh mengandung dua spasi berurutan.".to_string());
+            }
+        }
+        "nomor hp indonesia" | "nomor hp" | "phone" | "no hp" | "mobile" => {
+            // Regex: +628... atau 08... 
+            // Diubah {7,12} menjadi {7,14} untuk mengakomodasi input 15 digit (08 + 13 angka)
+            static PHONE_ID_REGEX: Lazy<Regex> =
+                Lazy::new(|| Regex::new(r"^(\+62|0)8[0-9]{7,14}$").unwrap());
+                
+            if !PHONE_ID_REGEX.is_match(input) {
+                return Err("Format nomor hp tidak valid (harus 08... atau +628... dan angka).".to_string());
+            }
+        }
+        _ => {
+            // Tipe lain lolos pre-validasi, lanjut ke LLM
+        }
+    }
+    Ok(())
+}
+
+// 2. Format Prompt
+pub fn format_prompt(user_input: &str, input_type_str: &str) -> String {
+    let pre_note = "Validasi input berikut dalam format JSON (valid: boolean, message: string bahasa indonesia).";
+    
+    // Sederhanakan untuk contoh Green, gunakan format yang Anda miliki sebelumnya untuk logic lengkapnya
+    // Di sini saya pastikan mengandung kata kunci yang dicek oleh Test
+    format!(
+        "{}\nInput: \"{}\"\nTipe: \"{}\"\nPastikan output JSON valid.",
+        pre_note,
+        user_input.replace("\"", "\\\""),
+        input_type_str
+    )
+}
+
+// 3. Generate Body JSON
+pub fn common_body_generation(prompt: &str, model_name: &str) -> serde_json::Value {
+    let mut body = serde_json::json!({
+        "contents": [{ "parts": [{ "text": prompt }] }],
+        "safetySettings": [
+            { "category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE" },
+            { "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE" },
+            { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE" },
+            { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE" }
+        ]
+    });
+
+    if model_name.starts_with("gemini") {
+        if let Some(map) = body.as_object_mut() {
+            map.insert(
+                "generationConfig".to_string(),
+                serde_json::json!({
+                    "responseMimeType": "application/json"
+                }),
+            );
+        }
+    }
+    body
+}
+
+// 4. Parse Response & Helper
+fn clean_json_markdown(raw: &str) -> &str {
+    raw.trim()
+        .trim_start_matches("```json")
+        .trim_start_matches("```")
+        .trim_end_matches("```")
+        .trim()
+}
+
+pub fn parse_gemini_response(gemini_api_response: GeminiApiResponse) -> Result<ValidationResponse, Box<dyn std::error::Error + Send + Sync>> {
+    let text = gemini_api_response.candidates.first()
+        .and_then(|c| c.content.parts.first())
+        .map(|p| &p.text)
+        .ok_or("Empty response from LLM")?;
+
+    let clean_text = clean_json_markdown(text);
+    
+    // Handle array response logic (seperti di test case)
+    let json_val: serde_json::Value = serde_json::from_str(clean_text)?;
+    
+    let target_obj = if let Some(arr) = json_val.as_array() {
+        arr.first().ok_or("Empty JSON array")?
+    } else {
+        &json_val
+    };
+
+    let resp: ValidationResponse = serde_json::from_value(target_obj.clone())?;
+    Ok(resp)
+}
+
+// --- FUNGSI INTEGRASI ASYNC ---
+pub async fn validate_input_with_llm_async(
+    user_input: &str,
+    model_name: &str,
+    input_type_str: &str,
+    gemini_api_key: &str,
+) -> Result<ValidationResponse, Box<dyn std::error::Error + Send + Sync>> {
+    // 1. Pre-validation
+    if let Err(e) = pre_validate_syntactically(user_input, input_type_str) {
+        return Ok(ValidationResponse { valid: false, message: e });
+    }
+
+    // 2. HTTP Request
+    let client = AsyncClient::new();
+    let url = format!(
+        "[https://generativelanguage.googleapis.com/v1beta/models/](https://generativelanguage.googleapis.com/v1beta/models/){}:generateContent?key={}",
+        model_name, gemini_api_key
+    );
+    
+    let prompt = format_prompt(user_input, input_type_str);
+    let body = common_body_generation(&prompt, model_name);
+
+    let resp = client.post(&url).json(&body).send().await?;
+    
+    if !resp.status().is_success() {
+        return Err(format!("API Error: {}", resp.status()).into());
+    }
+
+    let gemini_resp: GeminiApiResponse = resp.json().await?;
+    parse_gemini_response(gemini_resp)
+}
+
+// --- FUNGSI INTEGRASI SYNC ---
+#[cfg(not(target_arch = "wasm32"))]
+#[cfg(feature = "native_ffi_setup")]
+pub fn validate_input_with_llm_sync(
+    user_input: &str,
+    model_name: &str,
+    input_type_str: &str,
+    config: &ApiConfig,
+) -> Result<ValidationResponse, Box<dyn std::error::Error + Send + Sync>> {
+     // 1. Pre-validation
+    if let Err(e) = pre_validate_syntactically(user_input, input_type_str) {
+        return Ok(ValidationResponse { valid: false, message: e });
+    }
+
+    let client = BlockingClient::new();
+    let url = format!(
+        "[https://generativelanguage.googleapis.com/v1beta/models/](https://generativelanguage.googleapis.com/v1beta/models/){}:generateContent?key={}",
+        model_name, config.api_key
+    );
+
+    let prompt = format_prompt(user_input, input_type_str);
+    let body = common_body_generation(&prompt, model_name);
+
+    let resp = client.post(&url).json(&body).send()?;
+
+    if !resp.status().is_success() {
+        return Err(format!("API Error: {}", resp.status()).into());
+    }
+
+    // Perbaikan: gunakan text() lalu parse, karena struct GeminiApiResponse butuh struktur tepat
+    let text_resp = resp.text()?;
+    let gemini_resp: GeminiApiResponse = serde_json::from_str(&text_resp)?;
+    
+    parse_gemini_response(gemini_resp)
+}
+
+*/

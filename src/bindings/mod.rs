@@ -12,4 +12,11 @@ pub mod c_ffi;
 // Hanya sertakan modul node (untuk Wasm) jika fitur wasm_bindings_setup aktif
 // ATAU jika target arsitekturnya adalah wasm32
 #[cfg(any(feature = "wasm_bindings_setup", target_arch = "wasm32"))]
-pub mod nodejs;
+pub mod web;
+
+#[cfg(not(target_arch = "wasm32"))]
+pub mod kotlin;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod flutter;
+
+

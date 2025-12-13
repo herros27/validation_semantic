@@ -1,15 +1,14 @@
 # # .github/workflows/release.yml
-
 name: Build and Publish Maturin Wheels
 
 on:
   push:
     tags:
-      - "v*" # contoh: v0.1.0, v1.0.1
+      - "v*"
 
 permissions:
   contents: write
-  id-token: write   # <-- WAJIB untuk OIDC!
+  id-token: write # 🔐 WAJIB untuk PyPI Trusted Publisher (OIDC)
 
 jobs:
   build:
@@ -19,15 +18,14 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Set up Rust
+      - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install maturin
@@ -39,38 +37,38 @@ jobs:
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v4
         with:
-          name: maturin-wheels
+          name: wheels-${{ matrix.os }}
           path: dist/*.whl
 
   release:
     runs-on: ubuntu-latest
     needs: build
 
+    permissions:
+      contents: write
+      id-token: write # 🔐 WAJIB
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Download all wheels
         uses: actions/download-artifact@v4
         with:
-          name: maturin-wheels
           path: dist
 
-      - name: Show output files
+      - name: List wheels
         run: ls -R dist
 
-      - name: Upload to GitHub Release
+      - name: Upload GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*.whl
+          files: dist/**/*.whl
 
-      - name: Publish to PyPI via OIDC 🔐
+      - name: Publish to PyPI via OIDC 🚀
         if: startsWith(github.ref, 'refs/tags/v')
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages: dist/*.whl
           skip-existing: true
-
 # name: Build and Publish Maturin Wheels
 
 # on:
@@ -146,4 +144,3 @@ jobs:
 #         run: |
 #           pip install twine
 #           twine upload dist/**/*.whl
-

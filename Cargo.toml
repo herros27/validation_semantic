@@ -1,49 +1,73 @@
 [package]
 name = "validation_semantic"
-version = "1.1.3"
+version = "1.1.4"
 edition = "2021"
-build = "build.rs"
 authors = ["Kemas Khairunsyah <khairunsyah8935@gmail.com>"]
 description = "Library pendeteksi kalimat atau kata untuk validasi semantik input menggunakan LLM"
 license = "MIT"
 repository = "https://github.com/herros27/validation_semantic"
 homepage = "https://github.com/herros27/validation_semantic"
+build = "build.rs"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
+name = "validation_semantic"
 
 [[bin]]
 name = "run_validation_tester"
 path = "src/main.rs"
 
+[[bin]]
+name = "uniffi-bindgen"
+path = "src/bin/uniffi-bindgen.rs"
+
+# ==========================================================
+# DEPENDENCIES
+# ==========================================================
 [dependencies]
-serde = { version = "1", features = ["derive"] }
-serde_json = "1.0.145"
+# --- Common (Semua Platform) ---
+anyhow = "1.0"
+thiserror = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 dotenv = "0.15"
 once_cell = "1.19"
-js-sys = "0.3.80"
-web-sys = { version = "0.3", features = ["console"] }
-# reqwest dibuat opsional dan default-features = false.
-# Fitur spesifik ("json", "blocking", "rustls-tls", "wasm-bindgen") akan diaktifkan HANYA melalui fitur Cargo kita.
-reqwest = { version = "0.11.27", default-features = false, optional = true }
-regex = "1.11.2"
-# Dependensi opsional lainnya
-wasm-bindgen = { version = "0.2.92", optional = true }
-wasm-bindgen-futures = { version = "0.4.42", optional = true }
-serde-wasm-bindgen = { version = "0.6.5", optional = true }
-console_error_panic_hook = { version = "0.1.7", optional = true }
+regex = "1.11"
+flutter_rust_bridge = "2.0.0"
+
+# --- Native Only (Android/iOS/Python) - Made OPTIONAL ---
+# Kita buat optional agar tidak error saat build WASM
+uniffi = { version = "0.30.0", features = ["cli"], optional = true }
+tokio = { version = "1.0", features = ["rt-multi-thread", "macros"], optional = true }
 pyo3 = { version = "0.25.1", features = ["extension-module", "abi3-py38"], optional = true }
-tokio = { version = "1.46.1", features = ["rt-multi-thread", "macros"], optional = true }
+
+# --- Web/WASM Only - Made OPTIONAL ---
+wasm-bindgen = { version = "0.2", optional = true }
+wasm-bindgen-futures = { version = "0.4", optional = true }
+serde-wasm-bindgen = { version = "0.6", optional = true }
+console_error_panic_hook = { version = "0.1", optional = true }
+js-sys = { version = "0.3", optional = true }
+web-sys = { version = "0.3", features = ["console"], optional = true }
+
+# --- Reqwest (Hybrid) ---
+reqwest = { version = "0.11", default-features = false, optional = true }
+
+[build-dependencies]
+uniffi = { version = "0.30.0", features = ["build"] }
 
 [profile.release]
 lto = true
 opt-level = "z"
+strip = true
+codegen-units = 1
 
+# ==========================================================
+# FEATURES CONFIGURATION
+# ==========================================================
 [features]
-console_error_panic_hook_feature = []
-default = ["native_ffi_setup"] # Default build untuk native FFI
+default = ["native_ffi_setup"]
 
-# Fitur untuk mengaktifkan reqwest dengan konfigurasi NATIVE SINKRON
+# 1. Konfigurasi Reqwest Native
 reqwest_native_sync = [
     "dep:reqwest",
     "reqwest/json",
@@ -51,35 +75,36 @@ reqwest_native_sync = [
     "reqwest/rustls-tls"
 ]
 
-# Fitur untuk mengaktifkan reqwest dengan konfigurasi WASM ASINKRON
+# 2. Konfigurasi Reqwest WASM
 reqwest_wasm = [
     "dep:reqwest",
-    "reqwest/json",
-    #"reqwest/wasm-bindgen"
+    "reqwest/json"
 ]
 
-# Fitur untuk build native (FFI C, dan PyO3 jika sinkron)
+# 3. Setup Native (Android/iOS)
+# PERBAIKAN: "dep:uniffi" ditambahkan di sini.
+# Artinya: Uniffi hanya aktif jika fitur ini dipanggil (tidak saat WASM).
 native_ffi_setup = [
-    "reqwest_native_sync", # Menggunakan konfigurasi reqwest native sinkron
-    "dep:pyo3",            # Jika PyO3 digunakan dalam build default ini
-    "dep:tokio"            # Jika FFI C/PyO3 Anda MEMANGGIL fungsi async Rust dengan block_on
+    "reqwest_native_sync",
+    "dep:pyo3",
+    "dep:tokio",
+    "dep:uniffi" 
 ]
 
-# Fitur untuk build WebAssembly (Wasm)
+# 4. Setup WASM (Web)
+# Pastikan TIDAK ADA "dep:uniffi" di sini agar build wasm sukses.
 wasm_bindings_setup = [
-    "reqwest_wasm",        # Menggunakan konfigurasi reqwest Wasm
+    "reqwest_wasm",
     "dep:wasm-bindgen",
     "dep:wasm-bindgen-futures",
     "dep:serde-wasm-bindgen",
-    "dep:console_error_panic_hook"
+    "dep:console_error_panic_hook",
+    "dep:js-sys",
+    "dep:web-sys"
 ]
 
-# Fitur spesifik untuk Python jika berbeda atau untuk kejelasan
-# Jika python_bindings_feature sama dengan native_ffi_setup:
+# 5. Setup Python
 python_bindings_feature = ["native_ffi_setup"]
-# Atau jika memiliki kebutuhan berbeda, definisikan secara terpisah:
-# python_bindings_feature = [
-#     "reqwest_native_sync", # atau "reqwest_NATIVE_ASYNC_via_tokio" jika PyO3 Anda async
-#     "dep:pyo3",
-#     "dep:tokio" # Jika menggunakan block_on atau pyo3-asyncio dengan tokio
-# ]
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
